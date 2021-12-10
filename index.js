@@ -32,13 +32,18 @@ client.on('ready', () => {
       await db.insertOne({"id":"income","income":"{}"});
       income = await db.find("income");
     }
-    await client.guilds.fetch()
+    await client.guilds.fetch();
     let guild = client.guilds.cache.get(guild_id);
     await guild.members.fetch();
+    await guild.roles.fetch();
     income = JSON.parse(income.income);
     for (i=0; i < Object.keys(income).length; i++) {
       let roleincome = income[Object.keys(income)[i]]
-      let members = guild.roles.cache.get(Object.keys(income)[i]).members.map(m=>m.user.id);
+      let role = guild.roles.cache.get(Object.keys(income)[i]);
+      if (!role) {
+        continue
+      }
+      let members = role.members.map(m=>m.user.id);
       if (Date.now() > roleincome.last_claim+(roleincome.claim_every*3600000)) {
         let multiplier = Math.floor((Date.now()-roleincome.last_claim)/(roleincome.claim_every*3600000));
         for (j=0; j < members.length; j++) {
@@ -557,7 +562,10 @@ client.on('messageCreate', async message => {
     } else {
       for (i=0; i < Object.keys(income).length; i++) {
         let role = message.guild.roles.cache.get(Object.keys(income)[i]);
-        IncomeEmbed.addField(String(income[Object.keys(income)[i]].amount)+" "+currency_name+" every "+income[Object.keys(income)[i]].claim_every+" hours", role.name)
+        if (!role) {
+          continue
+        }
+        IncomeEmbed.addField(String(income[Object.keys(income)[i]].amount)+" "+currency_name+" every "+income[Object.keys(income)[i]].claim_every+" hours", role.name);
       }
     }
     message.channel.send({embeds:[IncomeEmbed]});
