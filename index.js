@@ -25,7 +25,7 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   client.user.setActivity('!help', { type: 'PLAYING' });
   //setInterval
-  setInterval(async function(){ 
+  setInterval(async function(){
     console.log("Role income started")
     let income = await db.find("income");
     if (!income) {
