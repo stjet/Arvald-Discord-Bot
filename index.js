@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 //const client = new Discord.Client({fetchAllMembers: true});
 const botIntents = new Discord.Intents();
-botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS'])
+botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS', 'GUILD_MESSAGE_REACTIONS'])
 const client = new Discord.Client({intents:botIntents});
 
 const keep_alive = require('./keep_alive.js');
@@ -295,7 +295,10 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const collector = botmsg.createReactionCollector((reaction,  user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000})
+        const filter = (reaction, user) => {
+          return ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id
+        }
+        const collector = botmsg.createReactionCollector({filter, time: 60000});
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
@@ -349,7 +352,6 @@ client.on('messageCreate', async message => {
       }
     }
     if (Object.keys(items).length > 8) {
-      console.log(items)
       let embed_pages = [];
       let number_of_pages = Math.ceil(Object.keys(items).length/8);
       for (let i=0; i < number_of_pages; i++) {
@@ -358,7 +360,6 @@ client.on('messageCreate', async message => {
           .setTitle("Store Page "+String(i+1))
           .setTimestamp()
         for (let j=0; j < 8; j++) {
-          console.log((i*8)+j, Object.keys(items).length)
           if ((i*8)+j < Object.keys(items).length) {
             StoreEmbed.addField(Object.keys(items)[(i*8)+j]+": "+String(items[Object.keys(items)[(i*8)+j]].price)+" "+currency_name,items[Object.keys(items)[(i*8)+j]].description);
           } else {
@@ -371,7 +372,10 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds:[embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const collector = botmsg.createReactionCollector((reaction, user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000})
+        const filter = (reaction, user) => {
+          return ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id
+        }
+        const collector = botmsg.createReactionCollector({filter, time: 60000});
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
