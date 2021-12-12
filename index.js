@@ -23,7 +23,7 @@ const guild_id = config.guild_id;
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  client.user.setActivity('!help', { type: 'PLAYING' });
+  client.user.setActivity(prefix+'help', { type: 'PLAYING' });
   //setInterval
   setInterval(async function(){
     console.log("Role income started")
@@ -82,7 +82,7 @@ client.on('ready', () => {
         await db.income_change(JSON.stringify(income));
       }
     }
-  }, 3600000); //3600000 is 1 hour
+  }, 3600000/2); //3600000/2 is half hour
 });
 
 //stakes: '{stake_owner:{stake_issuer: percentage}}'
@@ -136,6 +136,7 @@ client.on('messageCreate', async message => {
       .addField(prefix+"stakessell [price] [percentage to sell] [optional: stake issuer user @]", 'Sell stake') //PENDING TESTING
       .addField(prefix+"stakesmarket", 'See which stakes are being sold') //PENDING TESTING
       .addField(prefix+"stakescancel", 'Cancels sell order') //PENDING TESTING
+      .addField(prefix+"nextincome [role @]", 'When next role income payout') 
       .setTimestamp()
     if (admins.includes(message.author.id)) {
       let AdminHelpEmbed = new Discord.MessageEmbed()
@@ -581,7 +582,11 @@ client.on('messageCreate', async message => {
     stakes = JSON.parse(stakes.stakes);
     for (i=0; i < Object.keys(stakes).length; i++) {
       let stake_owner = stakes[Object.keys(stakes)[i]];
-      send_string += "**"+message.guild.members.cache.get(Object.keys(stakes)[i]).user.tag+"**\n";
+      let user = message.guild.members.cache.get(Object.keys(stakes)[i]);
+      if (!user) {
+        continue
+      }
+      send_string += "**"+user.user.tag+"**\n";
       for (j=0; j < Object.keys(stake_owner).length; j++) {
         let stake_issuer = Object.keys(stake_owner)[j];
         send_string += message.guild.members.cache.get(Object.keys(stake_owner)[j]).user.tag+": "+stake_owner[stake_issuer]+"%\n";
@@ -603,7 +608,11 @@ client.on('messageCreate', async message => {
     for (i=0; i < Object.keys(market).length; i++) {
       let stake_seller = Object.keys(market)[i];
       await message.guild.members.fetch()
-      send_string += String(market[stake_seller][0])+" percent of "+message.guild.members.cache.get(market[stake_seller][2]).user.tag+" being sold by "+message.guild.members.cache.get(stake_seller).user.tag+" for "+String(market[stake_seller][1])+" "+currency_name+"\n";
+      let user = message.guild.members.cache.get(Object.keys(stakes)[i]);
+      if (!user) {
+        continue
+      }
+      send_string += String(market[stake_seller][0])+" percent of "+message.guild.members.cache.get(market[stake_seller][2]).user.tag+" being sold by "+user.user.tag+" for "+String(market[stake_seller][1])+" "+currency_name+"\n";
     }
     message.channel.send(send_string);
   } else if (message.content.toLowerCase().startsWith(prefix+"stakesbuy")) {
@@ -714,6 +723,27 @@ client.on('messageCreate', async message => {
     delete market[message.author.id];
     await db.market_change(JSON.stringify(market));
     message.channel.send("Canceled stake");
+  } else if (message.content.toLowerCase().startsWith(prefix+"nextincome")) {
+    let role = message.mentions.roles.first();
+    if (!role) {
+      return message.channel.send("No role mention");
+    }
+    let income = await db.find("income");
+    if (!income) {
+      await db.insertOne({"id":"income","income":"{}"});
+      income = await db.find("income");
+    }
+    income = JSON.parse(income.income);
+    if (!income[role.id]) {
+      return message.channel.send("Error role income does not exist");
+    }
+    let minutes = Math.round((Number(income[role.id].last_claim)+Number(income[role.id].claim_every)*60*60*1000 - Date.now())/1000/60);
+    let hours = minutes/60;
+    if (hours < 1) {
+      return message.channel.send(minutes+" minutes. Please note the bot updates role income every half hour or so, so if the time given is less than a half hour (or negative), it may not actually update then.");
+    } else {
+      return message.channel.send(hours+" hours.");
+    }
   }
 
   //admin only functions
