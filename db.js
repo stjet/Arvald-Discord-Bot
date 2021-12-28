@@ -10,11 +10,11 @@ db.then((db) => {
 //collection.insertOne({"id":"store"})
 
 async function insert(id,bal,inv) {
-  await collection.insertOne({"id":id,"bal":bal,"inv":inv});
+  await collection.insertOne({"id":id,"bal":Number(bal),"inv":inv});
 }
 
 async function replace(id, newbal,inv) {
-  await collection.replaceOne({"id":id}, {"id":id,"bal":newbal,"inv":inv});
+  await collection.replaceOne({"id":id}, {"id":id,"bal":Number(newbal),"inv":inv});
 }
 
 async function find(id) {

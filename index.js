@@ -457,7 +457,7 @@ client.on('messageCreate', async message => {
       return message.channel.send("Sender balance too low")
     }
     sender_bal = sender.bal-amount;
-    receiver_bal = receiver.bal+amount;
+    receiver_bal = Number(receiver.bal)+amount;
     await db.replace("user-"+message.author.id, sender_bal, sender.inv);
     await db.replace("user-"+mention.id, receiver_bal, receiver.inv);
     message.channel.send("Successfully sent "+amount+" to "+mention.username);
@@ -640,7 +640,7 @@ client.on('messageCreate', async message => {
     let bal = user.bal-offer[1];
     await db.replace("user-"+message.author.id, bal, user.inv);
     let seller_user = await db.find("user-"+seller);
-    let seller_bal = user.bal+offer[1];
+    let seller_bal = Number(user.bal)+offer[1];
     await db.replace("user-"+seller, seller_bal, seller_user.inv);
     let stakes = await db.find("stakes");
     stakes = JSON.parse(stakes.stakes);
@@ -767,9 +767,9 @@ client.on('messageCreate', async message => {
         }
       }
       let items = await db.find("store");
-      if (!store) {
+      if (!items) {
         await db.insertOne({"id":"store","items":"{}"});
-        store = await db.find("store");
+        items = await db.find("store");
       }
       items = JSON.parse(items.items);
       
@@ -814,9 +814,9 @@ client.on('messageCreate', async message => {
         }
       }
       let items = await db.find("store");
-      if (!store) {
+      if (!items) {
         await db.insertOne({"id":"store","items":"{}"});
-        store = await db.find("store");
+        items = await db.find("store");
       }
       items = JSON.parse(items.items);
       if (!items[item]) {
@@ -897,6 +897,7 @@ client.on('messageCreate', async message => {
       delete items[item_name];
       items = JSON.stringify(items);
       await db.store_change(items);
+      //delete items in other invs also
       message.channel.send("Item deleted")
     } else if (message.content.toLowerCase().startsWith(prefix+"edititem")) {
       let item_name = args[0];
@@ -924,6 +925,9 @@ client.on('messageCreate', async message => {
       let description = args.splice(2);
       description = description.join(" ");
       description = description.slice(1,-1);
+      if (!description) {
+        return message.channel.send("Error, no description")
+      }
       items[item_name] = {"price": price, "description": description};
       items = JSON.stringify(items);
       await db.store_change(items);
@@ -1000,7 +1004,7 @@ client.on('messageCreate', async message => {
         stakes = JSON.stringify(stakes);
         await db.stakes_change(stakes);
       }
-      let user_bal = user.bal;
+      let user_bal = Number(user.bal);
       user_bal = user_bal+amount;
       await db.replace("user-"+mention.id, user_bal, user.inv);
       message.channel.send("Success, money added");
@@ -1015,7 +1019,8 @@ client.on('messageCreate', async message => {
       } else {
         try {
           amount = Number(args[1])
-          if (!amount) {
+          if (amount === 0) {
+          } else if (!amount) {
             return message.channel.send("Second parameter is not a number, syntax error")
           }
         } catch {
