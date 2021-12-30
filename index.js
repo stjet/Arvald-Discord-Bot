@@ -128,9 +128,10 @@ client.on('messageCreate', async message => {
       .addField(prefix+"bal [optional: user @]", 'Shows balance') //FINISHED
       .addField(prefix+"transfer [user @] [amount]", 'Transfer funds to different user') //FINISHED
       .addField(prefix+"roll [optional: dice number]d[dice faces]", 'Roll dice') //FINISHED
+      .addField(prefix+"leaderboard", 'Shows top 10 highest balance users') //FINISHED
       .addField(prefix+"useitem [item] [optional: quantity]", 'Use items (destroys them)') //FINISHED
       .addField(prefix+"credits", 'Shows credits of bot creator') //FINISHED
-      .addField(prefix+"income",'Show role income') //FINISHED
+      .addField(prefix+"income [optional: ascending/descending]",'Show role income') //FINISHED
       .addField(prefix+"stakeslist", 'Show stakes info') //IN PROGRESS
       .addField(prefix+"stakesbuy [seller: user @]", 'Buy stake') //PENDING TESTING
       .addField(prefix+"stakessell [price] [percentage to sell] [optional: stake issuer user @]", 'Sell stake') //PENDING TESTING
@@ -353,6 +354,9 @@ client.on('messageCreate', async message => {
         if (!start_page) {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
+        if (start_page < 1) {
+          return message.channel.send("Invalid page number");
+        }
       } catch {
         return message.channel.send("First (optional) argument is not a number")
       }
@@ -360,6 +364,10 @@ client.on('messageCreate', async message => {
     if (Object.keys(items).length > 8) {
       let embed_pages = [];
       let number_of_pages = Math.ceil(Object.keys(items).length/8);
+      if (number_of_pages < start_page) {
+        message.channel.send("That page number does not exist");
+        start_page = number_of_pages;
+      }
       for (let i=0; i < number_of_pages; i++) {
         let StoreEmbed = new Discord.MessageEmbed()
           .setColor('#5a6347')
@@ -553,23 +561,84 @@ client.on('messageCreate', async message => {
       await db.insertOne({"id":"income","income":"{}"});
       income = await db.find("income");
     }
-    let IncomeEmbed = new Discord.MessageEmbed()
-      .setColor('#84597f')
-      .setTitle("Role Income")
-      .setTimestamp();
     income = JSON.parse(income.income);
-    if (Object.keys(income).length == 0) {
-      IncomeEmbed.setDescription("No role income")
-    } else {
-      for (i=0; i < Object.keys(income).length; i++) {
-        let role = message.guild.roles.cache.get(Object.keys(income)[i]);
+    let income_keys = Object.keys(income);
+    if (args[0] == "descending" || args[0] == "d") {
+      //this will find highest amount in income, add to new list, remove from old, repeat until no more left
+      let old_income = Object.keys(income);
+      let new_income = [];
+      let length = Object.keys(income).length;
+      for (e=0; e < length; e++) {
+        console.log(new_income, old_income)
+        let biggest;
+        for (i=0; i < old_income.length; i++) {
+          if (!biggest) {
+            biggest = i;
+          } else if (income[old_income[i]].amount > income[old_income[biggest]].amount) {
+            biggest = i;
+          }
+        }
+        new_income.push(old_income[biggest]);
+        old_income.splice(biggest, 1);
+      }
+      income_keys = new_income;
+    } else if (args[0] == "ascending" || args[0] == "a") {
+      let old_income = Object.keys(income);
+      let new_income = [];
+      let length = Object.keys(income).length;
+      for (e=0; e < length; e++) {
+        let smallest;
+        for (i=0; i < old_income.length; i++) {
+          if (!smallest) {
+            smallest = i;
+          } else if (income[old_income[i]].amount < income[old_income[smallest]].amount) {
+            smallest = i;
+          }
+        }
+        new_income.push(old_income[smallest]);
+        old_income.splice(smallest, 1);
+      }
+      income_keys = new_income;
+    }
+    if (income_keys.length == 0) {
+      let IncomeEmbed = new Discord.MessageEmbed()
+        .setColor('#84597f')
+        .setTitle("Role Income")
+        .setTimestamp();
+      IncomeEmbed.setDescription("No role income");
+      message.channel.send({embeds:[IncomeEmbed]});
+    } else if (income_keys.length <= 25) {
+      let IncomeEmbed = new Discord.MessageEmbed()
+        .setColor('#84597f')
+        .setTitle("Role Income")
+        .setTimestamp();
+      for (i=0; i < income_keys.length; i++) {
+        let role = message.guild.roles.cache.get(income_keys[i]);
         if (!role) {
           continue
         }
-        IncomeEmbed.addField(String(income[Object.keys(income)[i]].amount)+" "+currency_name+" every "+income[Object.keys(income)[i]].claim_every+" hours", role.name);
+        IncomeEmbed.addField(String(income[income_keys[i]].amount)+" "+currency_name+" every "+income[income_keys[i]].claim_every+" hours", role.name);
       }
-    }
-    message.channel.send({embeds:[IncomeEmbed]});
+      message.channel.send({embeds:[IncomeEmbed]});
+    } else {
+      let embeds = [];
+      let number_of_pages = Math.ceil(Object.keys(items).length/25);
+      for (i=0; i < number_of_pages; i++) {
+        let IncomeEmbed = new Discord.MessageEmbed()
+          .setColor('#84597f')
+          .setTitle("Role Income")
+          .setTimestamp();
+        for (let j=0; j < 25; j++) {
+          if ((i*25)+j < Object.keys(items).length) {
+            IncomeEmbed.addField(String(income[Object.keys(income)[(i*25)+j]].amount)+" "+currency_name+" every "+income[Object.keys(income)[(i*8)+j]].claim_every+" hours", role.name);
+          } else {
+            break
+          }
+        }
+        embeds.push(IncomeEmbed);
+        message.channel.send({embeds:embeds});
+      }
+    } 
   } else if (message.content.toLowerCase().startsWith(prefix+"stakeslist")) {
     //stakes: '{stake_owner:{stake_issuer: percentage}}'
     let send_string = "";
@@ -744,6 +813,31 @@ client.on('messageCreate', async message => {
     } else {
       return message.channel.send(hours+" hours.");
     }
+  } else if (message.content.toLowerCase().startsWith(prefix+"leaderboard")) {
+    let users = await db.get_all_users();
+    let new_users = [];
+    //sort users by balance, then put in embed    //we want to get top 10
+    for (i=0; i < 10; i++) {
+      let greatest;
+      for (j=0; j < users.length; j++) {
+        if (!greatest) {
+          greatest = j;
+        } else if (users[j].bal > users[greatest].bal) {
+          greatest = j;
+        }
+      }
+      new_users.push(users[greatest]);
+      users.splice(greatest, 1);
+    }
+    //
+    let LeaderboardEmbed = new Discord.MessageEmbed()
+      .setColor('#99ff99')
+      .setTitle('Leaderboard')
+      .setFooter('Look mom, it\'s a rich person!')
+    for (k=0; k < new_users.length; k++) {
+      LeaderboardEmbed.addField(String(new_users[k].bal), "<@"+new_users[k].id.split('-')[1]+">")
+    }
+    return message.channel.send({embeds:[LeaderboardEmbed]})
   }
 
   //admin only functions
