@@ -106,7 +106,7 @@ async function new_check(message) {
 }
 
 client.on('messageCreate', async message => { 
-  const args = message.content.slice(prefix.length).split(' ');
+  const args = message.content.slice(prefix.length).split(' ');  
   const command = args.shift().toLowerCase();
 
   if (message.guild.id != guild_id) {
@@ -117,7 +117,7 @@ client.on('messageCreate', async message => {
     await new_check(message);
   }
 
-  if (message.content.toLowerCase() == prefix+"help") {
+  if (message.content.toLowerCase() == prefix+"help" || message.content.toLowerCase() == prefix+"commands") {
     let HelpEmbed = new Discord.MessageEmbed()
       .setColor('#17d328')
       .setTitle('Help')
@@ -240,7 +240,7 @@ client.on('messageCreate', async message => {
       .setDescription(user.bal+" "+currency_name)
       .setTimestamp()
     message.channel.send({embeds:[BalEmbed]});
-  } else if (message.content.toLowerCase().startsWith(prefix+"inv")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"inv") || message.content.toLowerCase().startsWith(prefix+"items")) {
     let user_name = message.author.username;
     let mention = message.mentions.users.first();
     let user_id = message.author.id;
@@ -340,7 +340,7 @@ client.on('messageCreate', async message => {
       }
       message.channel.send({embeds:[InvEmbed]})
     }
-  } else if (message.content.toLowerCase().startsWith(prefix+"store")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"store") || message.content.toLowerCase().startsWith(prefix+"shop")) {
     let start_page = 1;
     let store = await db.find("store");
     if (!store) {
@@ -424,7 +424,7 @@ client.on('messageCreate', async message => {
       }
       message.channel.send({embeds:[StoreEmbed]})
     }
-  } else if (message.content.toLowerCase().startsWith(prefix+"transfer")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"transfer") || message.content.toLowerCase().startsWith(prefix+"pay")) {
     //[user @] [amount]
     let mention = message.mentions.users.first();
     if (!mention) {
@@ -569,7 +569,6 @@ client.on('messageCreate', async message => {
       let new_income = [];
       let length = Object.keys(income).length;
       for (e=0; e < length; e++) {
-        console.log(new_income, old_income)
         let biggest;
         for (i=0; i < old_income.length; i++) {
           if (!biggest) {
@@ -813,10 +812,11 @@ client.on('messageCreate', async message => {
     } else {
       return message.channel.send(hours+" hours.");
     }
-  } else if (message.content.toLowerCase().startsWith(prefix+"leaderboard")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"leaderboard") || message.content.toLowerCase().startsWith(prefix+"rich")) {
     let users = await db.get_all_users();
     let new_users = [];
-    //sort users by balance, then put in embed    //we want to get top 10
+    //sort users by balance, then put in embed
+    //we want to get top 10
     for (i=0; i < 10; i++) {
       let greatest;
       for (j=0; j < users.length; j++) {
