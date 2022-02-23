@@ -106,9 +106,13 @@ async function new_check(message) {
 }
 
 client.on('messageCreate', async message => { 
-  const args = message.content.slice(prefix.length).split(' ');  
+  let args = message.content.slice(prefix.length).split(' ');
+  //note to self: why didn't I use command instead of .startswith lmao
   const command = args.shift().toLowerCase();
 
+  //get rid of spaces in args
+  args = args.filter(arg => arg.length != 0);
+  
   if (message.guild.id != guild_id) {
     return
   }
@@ -145,9 +149,9 @@ client.on('messageCreate', async message => {
         .addField(prefix+"editincome [role @] [claim every x hours] [amount]",'Edit role income') //FINISHED
         .addField(prefix+"deleteincome [role @]",'Delete role income') //FINISHED
         .addField(prefix+"createincome [role @] [claim every x hours] [amount]",'Create role income') //FINISHED
-        .addField(prefix+"edititem [item name] [price] '[description]'",'Edit store item') //FINISHED
+        .addField(prefix+"edititem [item name] [price] '[optional: description]'",'Edit store item') //FINISHED
         .addField(prefix+"deleteitem [item name]",'Delete store item') //FINISHED
-        .addField(prefix+"createitem [name] [price] '[description]'",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
+        .addField(prefix+"createitem [name] [price] '[optional: description]'",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
         .addField(prefix+"setbal [user @] [value]",'Set balance of user') //FINISHED
         .addField(prefix+"removeinv [user @] [item] [optional: quantity]",'Remove item from inventory') //FINISHED
         .addField(prefix+"addinv [user @] [item] [optional: quantity]",'Add item to inventory') //FINISHED
@@ -160,7 +164,7 @@ client.on('messageCreate', async message => {
   } else if (message.content.toLowerCase().startsWith(prefix+"roll")) {
     let arg = args[0];
     if (!arg) {
-      return message.channel.send("Missing first arg");
+      return message.channel.send("Missing first arg: `[optional: dice number]d[dice faces]`, eg `1d6`");
     }
     if (!arg.includes("d")) {
       return message.channel.send("No 'd', invalid syntax")
@@ -284,6 +288,9 @@ client.on('messageCreate', async message => {
     if (Object.keys(user.inv).length > 8) {
       let embed_pages = [];
       let number_of_pages = Math.ceil(Object.keys(user.inv).length/8);
+			if (start_page > number_of_pages) {
+				return message.channel.send("Number too big, that many pages do not exist")
+			}
       for (let i=0; i < number_of_pages; i++) {
         let InvEmbed = new Discord.MessageEmbed()
           .setColor('#bc2134')
@@ -973,6 +980,9 @@ client.on('messageCreate', async message => {
       let description = args.splice(2);
       description = description.join(" ");
       description = description.slice(1,-1);
+      if (!description) {
+        description = "No description"
+      }
       items[item_name] = {"price": price, "description": description};
       items = JSON.stringify(items);
       await db.store_change(items);
@@ -1020,7 +1030,7 @@ client.on('messageCreate', async message => {
       description = description.join(" ");
       description = description.slice(1,-1);
       if (!description) {
-        return message.channel.send("Error, no description")
+        description = "No description";
       }
       items[item_name] = {"price": price, "description": description};
       items = JSON.stringify(items);
@@ -1247,6 +1257,25 @@ client.on('messageCreate', async message => {
       if (eval_enabled) {
         eval(args.join(" "));
       }
+    } else if (message.content.startsWith(prefix+'pauseincome')) {
+      //undocumented
+      if (Number(args[0])) {
+        //go through all role incomes, change last_claim to that
+        let income = await db.find("income");
+        if (!income) {
+          await db.insertOne({"id":"income","income":"{}"});
+          income = await db.find("income");
+        }
+        income = JSON.parse(income.income);
+        for (i=0; i < Object.keys(income).length; i++) {
+          let roleincome = income[Object.keys(income)[i]];
+          //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()
+          income[Object.keys(income)[i]].last_claim = Number(args[0]);
+          await db.income_change(JSON.stringify(income));
+        }
+        return message.channel.send("Paused, hopefully")
+      }
+      //1644847200000
     }
   }
 });
