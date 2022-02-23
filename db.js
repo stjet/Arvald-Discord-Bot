@@ -21,6 +21,11 @@ async function find(id) {
   return await collection.findOne({"id":id});
 }
 
+async function get_all_users() {
+  let results = await collection.find({ id: { $regex: /\d{18}/ } });
+  return results.toArray();
+}
+
 async function store_change(items) {
   await collection.replaceOne({"id":"store"}, {"id":"store","items":items});
 }
@@ -37,7 +42,7 @@ async function market_change(market) {
   await collection.replaceOne({"id":"market"}, {"id":"market","market":market});
 }
 
-async function insertOne(object) {
+async function insert_one(object) {
   await collection.insertOne(object);
 }
 
@@ -45,9 +50,10 @@ module.exports = {
   find: find,
   replace: replace,
   insert: insert,
+  get_all_users: get_all_users,
   store_change: store_change,
   income_change: income_change,
   stakes_change: stakes_change,
   market_change: market_change,
-  insertOne: insertOne
+  insert_one: insert_one
 }

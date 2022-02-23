@@ -29,7 +29,7 @@ client.on('ready', () => {
     console.log("Role income started")
     let income = await db.find("income");
     if (!income) {
-      await db.insertOne({"id":"income","income":"{}"});
+      await db.insert_one({"id":"income","income":"{}"});
       income = await db.find("income");
     }
     await client.guilds.fetch();
@@ -50,7 +50,7 @@ client.on('ready', () => {
           //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()
           let stakes = await db.find("stakes");
           if (!stakes) {
-            await db.insertOne({"id":"stakes","stakes":"{}"});
+            await db.insert_one({"id":"stakes","stakes":"{}"});
             stakes = await db.find("stakes");
           }
           stakes = JSON.parse(stakes.stakes);
@@ -93,7 +93,7 @@ async function new_check(message) {
     await db.insert("user-"+message.author.id, 0, "{}");
     let stakes = await db.find("stakes");
     if (!stakes) {
-      await db.insertOne({"id":"stakes","stakes":"{}"});
+      await db.insert_one({"id":"stakes","stakes":"{}"});
       stakes = await db.find("stakes");
     }
     stakes = JSON.parse(stakes.stakes);
@@ -351,7 +351,7 @@ client.on('messageCreate', async message => {
     let start_page = 1;
     let store = await db.find("store");
     if (!store) {
-      await db.insertOne({"id":"store","items":"{}"});
+      await db.insert_one({"id":"store","items":"{}"});
       store = await db.find("store");
     }
     let items = JSON.parse(store.items);
@@ -492,7 +492,7 @@ client.on('messageCreate', async message => {
     }
     let store = await db.find("store");
     if (!store) {
-      await db.insertOne({"id":"store","items":"{}"});
+      await db.insert_one({"id":"store","items":"{}"});
       store = await db.find("store");
     }
     let items = JSON.parse(store.items);
@@ -530,7 +530,7 @@ client.on('messageCreate', async message => {
     }
     let store = await db.find("store");
     if (!store) {
-      await db.insertOne({"id":"store","items":"{}"});
+      await db.insert_one({"id":"store","items":"{}"});
       store = await db.find("store");
     }
     let items = JSON.parse(store.items);
@@ -565,7 +565,7 @@ client.on('messageCreate', async message => {
     //format: {role id: {amount: money, claim_every: hours, last_claim: miliseconds}}
     let income = await db.find("income");
     if (!income) {
-      await db.insertOne({"id":"income","income":"{}"});
+      await db.insert_one({"id":"income","income":"{}"});
       income = await db.find("income");
     }
     income = JSON.parse(income.income);
@@ -650,7 +650,7 @@ client.on('messageCreate', async message => {
     let send_string = "";
     let stakes = await db.find("stakes");
     if (!stakes) {
-      await db.insertOne({"id":"stakes","stakes":"{}"});
+      await db.insert_one({"id":"stakes","stakes":"{}"});
       stakes = await db.find("stakes");
     }
     await message.guild.members.fetch()
@@ -673,7 +673,7 @@ client.on('messageCreate', async message => {
     let send_string = "";
     let market = await db.find("market");
     if (!market) {
-      await db.insertOne({"id":"market","market":"{}"});
+      await db.insert_one({"id":"market","market":"{}"});
       market = await db.find("market");
     }
     market = JSON.parse(market.market);
@@ -698,7 +698,7 @@ client.on('messageCreate', async message => {
     seller = seller.id;
     let market = await db.find("market");
     if (!market) {
-      await db.insertOne({"id":"market","market":"{}"});
+      await db.insert_one({"id":"market","market":"{}"});
       market = await db.find("market");
     }
     market = JSON.parse(market.market);
@@ -739,7 +739,7 @@ client.on('messageCreate', async message => {
     }
     let market = await db.find("market");
     if (!market) {
-      await db.insertOne({"id":"market","market":"{}"});
+      await db.insert_one({"id":"market","market":"{}"});
       market = await db.find("market");
     }
     market = JSON.parse(market.market);
@@ -775,7 +775,7 @@ client.on('messageCreate', async message => {
     }
     let stakes = await db.find("stakes");
     if (!stakes) {
-      await db.insertOne({"id":"stakes","stakes":"{}"});
+      await db.insert_one({"id":"stakes","stakes":"{}"});
       stakes = await db.find("stakes");
     }
     stakes = JSON.parse(stakes.stakes);
@@ -791,7 +791,7 @@ client.on('messageCreate', async message => {
   } else if (message.content.toLowerCase().startsWith(prefix+"stakescancel")) {
     let market = await db.find("market");
     if (!market) {
-      await db.insertOne({"id":"market","market":"{}"});
+      await db.insert_one({"id":"market","market":"{}"});
       market = await db.find("market");
     }
     market = JSON.parse(market.market);
@@ -805,7 +805,7 @@ client.on('messageCreate', async message => {
     }
     let income = await db.find("income");
     if (!income) {
-      await db.insertOne({"id":"income","income":"{}"});
+      await db.insert_one({"id":"income","income":"{}"});
       income = await db.find("income");
     }
     income = JSON.parse(income.income);
@@ -869,7 +869,7 @@ client.on('messageCreate', async message => {
       }
       let items = await db.find("store");
       if (!items) {
-        await db.insertOne({"id":"store","items":"{}"});
+        await db.insert_one({"id":"store","items":"{}"});
         items = await db.find("store");
       }
       items = JSON.parse(items.items);
@@ -916,7 +916,7 @@ client.on('messageCreate', async message => {
       }
       let items = await db.find("store");
       if (!items) {
-        await db.insertOne({"id":"store","items":"{}"});
+        await db.insert_one({"id":"store","items":"{}"});
         items = await db.find("store");
       }
       items = JSON.parse(items.items);
@@ -970,7 +970,7 @@ client.on('messageCreate', async message => {
       }
       let store = await db.find("store");
       if (!store) {
-        await db.insertOne({"id":"store","items":"{}"});
+        await db.insert_one({"id":"store","items":"{}"});
         store = await db.find("store");
       }
       let items = JSON.parse(store.items);
@@ -991,7 +991,7 @@ client.on('messageCreate', async message => {
       let item_name = args[0];
       let store = await db.find("store");
       if (!store) {
-        await db.insertOne({"id":"store","items":"{}"});
+        await db.insert_one({"id":"store","items":"{}"});
         store = await db.find("store");
       }
       let items = JSON.parse(store.items);
@@ -1183,7 +1183,7 @@ client.on('messageCreate', async message => {
       }
       let income = await db.find("income");
       if (!income) {
-        await db.insertOne({"id":"income","income":"{}"});
+        await db.insert_one({"id":"income","income":"{}"});
         income = await db.find("income");
       }
       income = JSON.parse(income.income);
@@ -1200,7 +1200,7 @@ client.on('messageCreate', async message => {
       }
       let income = await db.find("income");
       if (!income) {
-        await db.insertOne({"id":"income","income":"{}"});
+        await db.insert_one({"id":"income","income":"{}"});
         income = await db.find("income");
       }
       income = JSON.parse(income.income);
@@ -1243,7 +1243,7 @@ client.on('messageCreate', async message => {
       }
       let income = await db.find("income");
       if (!income) {
-        await db.insertOne({"id":"income","income":"{}"});
+        await db.insert_one({"id":"income","income":"{}"});
         income = await db.find("income");
       }
       income = JSON.parse(income.income);
@@ -1263,7 +1263,7 @@ client.on('messageCreate', async message => {
         //go through all role incomes, change last_claim to that
         let income = await db.find("income");
         if (!income) {
-          await db.insertOne({"id":"income","income":"{}"});
+          await db.insert_one({"id":"income","income":"{}"});
           income = await db.find("income");
         }
         income = JSON.parse(income.income);
