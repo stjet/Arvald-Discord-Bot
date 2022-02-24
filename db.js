@@ -46,6 +46,32 @@ async function insert_one(object) {
   await collection.insertOne(object);
 }
 
+//args shouldnt be all args 
+async function find_similar_items(args) {
+  //get rid of numbers, and mentions, combine rest of args
+  args = args.filter(arg => isNaN(arg) && !arg.includes('<'));
+  let query = args.join('_');
+  let store = await find('store');
+  let items = JSON.parse(store.items);
+  for (let i=0; i < Object.keys(items).length; i++) {
+    let item_name = Object.keys(items)[i];
+    if (query == item_name) {
+      return item_name;
+    }
+    if (query.includes('_')) {
+      query = query.split('_').map(arg => arg[0].toUpperCase()+arg.slice(1)).join('_')
+      if (query == item_name) {
+        return item_name;
+      }
+    } else {
+      if (query[0].toUpperCase()+query.slice(1) == item_name) {
+        return item_name;
+      }
+    }
+  }
+  return false
+}
+
 module.exports = {
   find: find,
   replace: replace,
@@ -55,5 +81,6 @@ module.exports = {
   income_change: income_change,
   stakes_change: stakes_change,
   market_change: market_change,
-  insert_one: insert_one
+  insert_one: insert_one,
+  find_similar_items: find_similar_items
 }

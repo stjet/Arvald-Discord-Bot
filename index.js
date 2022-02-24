@@ -497,6 +497,10 @@ client.on('messageCreate', async message => {
     }
     let items = JSON.parse(store.items);
     if (!items[item_name]) {
+      let similar_item = await db.find_similar_items(args);
+      if (similar_item) {
+        message.channel.send("Did you mean `"+similar_item+"`?");
+      }
       return message.channel.send("This item does not exist, error");
     }
     let user = await db.find("user-"+message.author.id);
@@ -535,6 +539,10 @@ client.on('messageCreate', async message => {
     }
     let items = JSON.parse(store.items);
     if (!items[item_name]) {
+      let similar_item = await db.find_similar_items(args);
+      if (similar_item) {
+        message.channel.send("Did you mean `"+similar_item+"`?");
+      }
       return message.channel.send("This item does not exist, error");
     }
     let user = await db.find("user-"+message.author.id);
@@ -875,6 +883,10 @@ client.on('messageCreate', async message => {
       items = JSON.parse(items.items);
       
       if (!items[item_name]) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
+        }
         return message.channel.send("Item does not exist")
       }
       let user = await db.find("user-"+mention.id);
@@ -996,6 +1008,10 @@ client.on('messageCreate', async message => {
       }
       let items = JSON.parse(store.items);
       if (!items[item_name]) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
+        }
         return message.channel.send("Error, item does not exist");
       }
       delete items[item_name];
@@ -1024,6 +1040,10 @@ client.on('messageCreate', async message => {
       let store = await db.find("store");
       let items = JSON.parse(store.items);
       if (!items[item_name]) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
+        }
         return message.channel.send("Error, item doesn't exist");
       }
       let description = args.splice(2);
