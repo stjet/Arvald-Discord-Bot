@@ -933,6 +933,10 @@ client.on('messageCreate', async message => {
       }
       items = JSON.parse(items.items);
       if (!items[item]) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
+        }
         return message.channel.send("Item does not exist")
       }
       let user = await db.find("user-"+mention.id);
