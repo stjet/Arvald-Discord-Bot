@@ -4,6 +4,7 @@ let db = mongo.getDb();
 let collection;
 
 db.then((db) => {
+  console.log("Connected to DB");
   collection = db.collection("collection");
 });
 

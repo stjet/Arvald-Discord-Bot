@@ -26,7 +26,7 @@ client.on('ready', () => {
   client.user.setActivity(prefix+'help', { type: 'PLAYING' });
   //setInterval
   setInterval(async function(){
-    console.log("Role income started")
+    console.log("Role income started");
     let income = await db.find("income");
     if (!income) {
       await db.insert_one({"id":"income","income":"{}"});
@@ -481,13 +481,13 @@ client.on('messageCreate', async message => {
     let item_name = args[0];
     let quantity = 1;
     if (args[1]) {
-      try {
-        quantity = Number(args[1]);
-        if (!quantity) {
-          return message.channel.send("Second parameter is not a number, syntax error");
+      quantity = Number(args[1]);
+      if (!quantity) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
         }
-      } catch {
-        return message.channel.send("Second argument is not number, error")
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     }
     let store = await db.find("store");
@@ -691,7 +691,7 @@ client.on('messageCreate', async message => {
     for (i=0; i < Object.keys(market).length; i++) {
       let stake_seller = Object.keys(market)[i];
       await message.guild.members.fetch()
-      let user = message.guild.members.cache.get(Object.keys(stakes)[i]);
+      let user = message.guild.members.cache.get(stake_seller);
       if (!user) {
         continue
       }

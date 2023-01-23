@@ -1,6 +1,6 @@
 const mongo = require('mongodb');
 
-let client = new mongo.MongoClient("mongodb+srv://dbUser:"+process.env.dbpass+"@cluster0.srz3r.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", { useNewUrlParser: true, useUnifiedTopology: true })
+let client = new mongo.MongoClient(process.env.mongo_connection_url, { useNewUrlParser: true, useUnifiedTopology: true })
 
 module.exports = {
   getDb: async function() {
