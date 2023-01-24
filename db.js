@@ -5,21 +5,21 @@ let collection;
 
 db.then((db) => {
   console.log("Connected to DB");
-  collection = db.collection("collection");
+  collection = db.collection("storage");
 });
 
 //collection.insertOne({"id":"store"})
 
-async function insert(id,bal,inv) {
-  await collection.insertOne({"id":id,"bal":Number(bal),"inv":inv});
+async function insert(id, bal, inv) {
+  await collection.insertOne({"id": id, "bal": Number(bal), "inv": inv});
 }
 
-async function replace(id, newbal,inv) {
-  await collection.replaceOne({"id":id}, {"id":id,"bal":Number(newbal),"inv":inv});
+async function replace(id, newbal, inv) {
+  await collection.replaceOne({"id": id}, {"id": id, "bal": Number(newbal), "inv": inv});
 }
 
 async function find(id) {
-  return await collection.findOne({"id":id});
+  return await collection.findOne({"id": id});
 }
 
 async function get_all_users() {
@@ -28,19 +28,19 @@ async function get_all_users() {
 }
 
 async function store_change(items) {
-  await collection.replaceOne({"id":"store"}, {"id":"store","items":items});
+  await collection.replaceOne({"id":"store"}, {"id": "store","items": items});
 }
 
 async function income_change(income) {
-  await collection.replaceOne({"id":"income"}, {"id":"income","income":income});
+  await collection.replaceOne({"id": "income"}, {"id": "income","income": income});
 }
 
 async function stakes_change(stakes) {
-  await collection.replaceOne({"id":"stakes"}, {"id":"stakes","stakes":stakes});
+  await collection.replaceOne({"id": "stakes"}, {"id": "stakes","stakes": stakes});
 }
 
 async function market_change(market) {
-  await collection.replaceOne({"id":"market"}, {"id":"market","market":market});
+  await collection.replaceOne({"id": "market"}, {"id": "market","market": market});
 }
 
 async function insert_one(object) {
