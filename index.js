@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 //const client = new Discord.Client({fetchAllMembers: true});
 const botIntents = new Discord.Intents();
 botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS', 'GUILD_MESSAGE_REACTIONS'])
-const client = new Discord.Client({intents:botIntents});
+const client = new Discord.Client({intents: botIntents});
 
 const keep_alive = require('./keep_alive.js');
 
@@ -10,7 +10,7 @@ const db = require('./db.js');
 
 const config = require('./config.js');
 
-const {token} = process.env;
+const { token } = process.env;
 
 const prefix = config.prefix;
 const currency_name = config.currency_name;
@@ -25,36 +25,31 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   client.user.setActivity(prefix+'help', { type: 'PLAYING' });
   //setInterval
-  setInterval(async function(){
-    console.log("Role income started");
+  setInterval(async function() {
+    console.log("Role income started")
     let income = await db.find("income");
     if (!income) {
-      await db.insert_one({"id":"income","income":"{}"});
+      await db.insert_one({"id": "income", "income": {}});
       income = await db.find("income");
     }
-    await client.guilds.fetch();
+    await client.guilds.fetch()
     let guild = client.guilds.cache.get(guild_id);
     await guild.members.fetch();
-    await guild.roles.fetch();
-    income = JSON.parse(income.income);
+    income = income.income;
     for (i=0; i < Object.keys(income).length; i++) {
       let roleincome = income[Object.keys(income)[i]]
-      let role = guild.roles.cache.get(Object.keys(income)[i]);
-      if (!role) {
-        continue
-      }
-      let members = role.members.map(m=>m.user.id);
+      let members = guild.roles.cache.get(Object.keys(income)[i]).members.map(m=>m.user.id);
       if (Date.now() > roleincome.last_claim+(roleincome.claim_every*3600000)) {
         let multiplier = Math.floor((Date.now()-roleincome.last_claim)/(roleincome.claim_every*3600000));
         for (j=0; j < members.length; j++) {
           //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()
           let stakes = await db.find("stakes");
           if (!stakes) {
-            await db.insert_one({"id":"stakes","stakes":"{}"});
+            await db.insert_one({"id": "stakes", "stakes": {}});
             stakes = await db.find("stakes");
           }
-          stakes = JSON.parse(stakes.stakes);
-          //stakes: '{stake_owner:{stake_issuer: percentage}}'
+          stakes = stakes.stakes;
+          //stakes: '{stake_owner: {stake_issuer: percentage}}'
           let stake_holders = [];
           //gets all holders of user's stakes
           for (k=0; k < Object.keys(stakes).length; k++) {
@@ -70,49 +65,44 @@ client.on('ready', () => {
           for (m=0; m < stake_holders.length; m++) {
             let user = await db.find("user-"+stake_holders[m][0]);
             if (!user) {
-              await db.insert("user-"+stake_holders[m][0], 0, "{}");
+              await db.insert_user("user-"+stake_holders[m][0]);
               user = await db.find("user-"+stake_holders[m][0]);
             }
-            let bal = JSON.parse(user.bal);
+            let bal = user.bal;
             bal += Math.round(roleincome.amount*(stake_holders[m][1]/100))*multiplier;
-            await db.replace("user-"+stake_holders[m][0], JSON.stringify(bal), user.inv);
+            await db.replace_user("user-"+stake_holders[m][0], bal, user.inv);
           }
         }
         income[Object.keys(income)[i]].last_claim = Date.now();
-        await db.income_change(JSON.stringify(income));
+        await db.income_change(income);
       }
     }
-  }, 3600000/2); //3600000/2 is half hour
+  }, 3600000); //3600000 is 1 hour
 });
 
-//stakes: '{stake_owner:{stake_issuer: percentage}}'
+//stakes: '{stake_owner: {stake_issuer: percentage}}'
 
 async function new_check(message) {
   let user = await db.find("user-"+message.author.id);
   if (!user) {
-    await db.insert("user-"+message.author.id, 0, "{}");
+    await db.insert_user("user-"+message.author.id);
     let stakes = await db.find("stakes");
     if (!stakes) {
-      await db.insert_one({"id":"stakes","stakes":"{}"});
+      await db.insert_one({"id": "stakes", "stakes": {}});
       stakes = await db.find("stakes");
     }
-    stakes = JSON.parse(stakes.stakes);
+    stakes = stakes.stakes;
     stakes[message.author.id] = {};
     stakes[message.author.id][message.author.id] = 100;
-    stakes = JSON.stringify(stakes);
     await db.stakes_change(stakes);
     message.channel.send("Account intialized");
   }
 }
 
 client.on('messageCreate', async message => { 
-  let args = message.content.slice(prefix.length).split(' ');
-  //note to self: why didn't I use command instead of .startswith lmao
+  const args = message.content.slice(prefix.length).split(' ');
   const command = args.shift().toLowerCase();
 
-  //get rid of spaces in args
-  args = args.filter(arg => arg.length != 0);
-  
   if (message.guild.id != guild_id) {
     return
   }
@@ -121,7 +111,7 @@ client.on('messageCreate', async message => {
     await new_check(message);
   }
 
-  if (message.content.toLowerCase() == prefix+"help" || message.content.toLowerCase() == prefix+"commands") {
+  if (message.content.toLowerCase() == prefix+"help"  || message.content.toLowerCase() == prefix+"commands") {
     let HelpEmbed = new Discord.MessageEmbed()
       .setColor('#17d328')
       .setTitle('Help')
@@ -136,12 +126,12 @@ client.on('messageCreate', async message => {
       .addField(prefix+"useitem [item] [optional: quantity]", 'Use items (destroys them)') //FINISHED
       .addField(prefix+"credits", 'Shows credits of bot creator') //FINISHED
       .addField(prefix+"income [optional: ascending/descending]",'Show role income') //FINISHED
+      .addField(prefix+"nextincome [role @]", 'When next role income payout') //PENDING TESTING
       .addField(prefix+"stakeslist", 'Show stakes info') //IN PROGRESS
       .addField(prefix+"stakesbuy [seller: user @]", 'Buy stake') //PENDING TESTING
       .addField(prefix+"stakessell [price] [percentage to sell] [optional: stake issuer user @]", 'Sell stake') //PENDING TESTING
       .addField(prefix+"stakesmarket", 'See which stakes are being sold') //PENDING TESTING
       .addField(prefix+"stakescancel", 'Cancels sell order') //PENDING TESTING
-      .addField(prefix+"nextincome [role @]", 'When next role income payout') 
       .setTimestamp()
     if (admins.includes(message.author.id)) {
       let AdminHelpEmbed = new Discord.MessageEmbed()
@@ -149,18 +139,18 @@ client.on('messageCreate', async message => {
         .addField(prefix+"editincome [role @] [claim every x hours] [amount]",'Edit role income') //FINISHED
         .addField(prefix+"deleteincome [role @]",'Delete role income') //FINISHED
         .addField(prefix+"createincome [role @] [claim every x hours] [amount]",'Create role income') //FINISHED
-        .addField(prefix+"edititem [item name] [price] '[optional: description]'",'Edit store item') //FINISHED
+        .addField(prefix+"edititem [item name] [price] '[description]'",'Edit store item') //FINISHED
         .addField(prefix+"deleteitem [item name]",'Delete store item') //FINISHED
-        .addField(prefix+"createitem [name] [price] '[optional: description]'",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
+        .addField(prefix+"createitem [name] [price] '[description]'",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
         .addField(prefix+"setbal [user @] [value]",'Set balance of user') //FINISHED
         .addField(prefix+"removeinv [user @] [item] [optional: quantity]",'Remove item from inventory') //FINISHED
         .addField(prefix+"addinv [user @] [item] [optional: quantity]",'Add item to inventory') //FINISHED
         .addField(prefix+"removemoney [user @] [amount]",'Remove money from inventory') //FINISHED
         .addField(prefix+"addmoney [user @] [amount]",'Add money to inventory') //FINISHED
         .setTimestamp()
-      return message.channel.send({embeds:[HelpEmbed, AdminHelpEmbed]});
+      return message.channel.send({embeds: [HelpEmbed, AdminHelpEmbed]});
     }
-    message.channel.send({embeds:[HelpEmbed]});
+    message.channel.send({embeds: [HelpEmbed]});
   } else if (message.content.toLowerCase().startsWith(prefix+"roll")) {
     let arg = args[0];
     if (!arg) {
@@ -228,13 +218,12 @@ client.on('messageCreate', async message => {
     }
     let user = await db.find("user-"+user_id);
     if (!user) {
-      await db.insert("user-"+user_id, 0, "{}");
+      await db.insert_user("user-"+user_id);
       user = await db.find("user-"+user_id);
       let stakes = await db.find("stakes");
-      stakes = JSON.parse(stakes.stakes);
+      stakes = stakes.stakes;
       stakes[user_id] = {};
       stakes[user_id][user_id] = 100;
-      stakes = JSON.stringify(stakes);
       await db.stakes_change(stakes);
     };
     let title = user_name+"'s Balance";
@@ -243,7 +232,7 @@ client.on('messageCreate', async message => {
       .setTitle(title)
       .setDescription(user.bal+" "+currency_name)
       .setTimestamp()
-    message.channel.send({embeds:[BalEmbed]});
+    message.channel.send({embeds: [BalEmbed]});
   } else if (message.content.toLowerCase().startsWith(prefix+"inv") || message.content.toLowerCase().startsWith(prefix+"items")) {
     let user_name = message.author.username;
     let mention = message.mentions.users.first();
@@ -274,23 +263,19 @@ client.on('messageCreate', async message => {
     }
     let user = await db.find("user-"+user_id);
     if (!user) {
-      await db.insert("user-"+user_id, 0, "{}");
+      await db.insert_user("user-"+user_id);
       user = await db.find("user-"+user_id);
       let stakes = await db.find("stakes");
-      stakes = JSON.parse(stakes.stakes);
+      stakes = stakes.stakes;
       stakes[user_id] = {}
       stakes[user_id][user_id] = 100;
-      stakes = JSON.stringify(stakes);
       await db.stakes_change(stakes);
     }
-    user.inv = JSON.parse(user.inv)
+    user.inv = user.inv;
     let title = user_name+"'s Inventory";
     if (Object.keys(user.inv).length > 8) {
       let embed_pages = [];
       let number_of_pages = Math.ceil(Object.keys(user.inv).length/8);
-			if (start_page > number_of_pages) {
-				return message.channel.send("Number too big, that many pages do not exist")
-			}
       for (let i=0; i < number_of_pages; i++) {
         let InvEmbed = new Discord.MessageEmbed()
           .setColor('#bc2134')
@@ -309,10 +294,7 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const filter = (reaction, user) => {
-          return ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id
-        }
-        const collector = botmsg.createReactionCollector({filter, time: 60000});
+        const collector = botmsg.createReactionCollector((reaction,  user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000})
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
@@ -325,7 +307,7 @@ client.on('messageCreate', async message => {
             } else if (page_num > embed_pages.length) {
               page_num = embed_pages.length;
             }
-            botmsg.edit({embeds:[embed_pages[page_num-1]]});
+            botmsg.edit({embeds: [embed_pages[page_num-1]]});
             botmsg.react("⬅️").then(() => botmsg.react("➡️"));
           });
         });
@@ -336,7 +318,7 @@ client.on('messageCreate', async message => {
         .setTitle(title)
         .setDescription("No items")
         .setTimestamp();
-      message.channel.send({embeds:[InvEmbed]})
+      message.channel.send({embeds: [InvEmbed]})
     } else {
       let InvEmbed = new Discord.MessageEmbed()
         .setColor('#bc2134')
@@ -345,24 +327,21 @@ client.on('messageCreate', async message => {
       for (let i=0; i < Object.keys(user.inv).length; i++) {
         InvEmbed.addField(Object.keys(user.inv)[i], String(user.inv[Object.keys(user.inv)[i]]));
       }
-      message.channel.send({embeds:[InvEmbed]})
+      message.channel.send({embeds: [InvEmbed]})
     }
-  } else if (message.content.toLowerCase().startsWith(prefix+"store") || message.content.toLowerCase().startsWith(prefix+"shop")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"store")) {
     let start_page = 1;
     let store = await db.find("store");
     if (!store) {
-      await db.insert_one({"id":"store","items":"{}"});
+      await db.insert_one({"id": "store", "items": {}});
       store = await db.find("store");
     }
-    let items = JSON.parse(store.items);
+    let items = store.items;
     if (args[0]) {
       try {
         start_page = Number(args[0]);
         if (!start_page) {
           return message.channel.send("Second parameter is not a number, syntax error");
-        }
-        if (start_page < 1) {
-          return message.channel.send("Invalid page number");
         }
       } catch {
         return message.channel.send("First (optional) argument is not a number")
@@ -371,16 +350,13 @@ client.on('messageCreate', async message => {
     if (Object.keys(items).length > 8) {
       let embed_pages = [];
       let number_of_pages = Math.ceil(Object.keys(items).length/8);
-      if (number_of_pages < start_page) {
-        message.channel.send("That page number does not exist");
-        start_page = number_of_pages;
-      }
       for (let i=0; i < number_of_pages; i++) {
         let StoreEmbed = new Discord.MessageEmbed()
           .setColor('#5a6347')
           .setTitle("Store Page "+String(i+1))
           .setTimestamp()
         for (let j=0; j < 8; j++) {
+          console.log((i*8)+j, Object.keys(items).length)
           if ((i*8)+j < Object.keys(items).length) {
             StoreEmbed.addField(Object.keys(items)[(i*8)+j]+": "+String(items[Object.keys(items)[(i*8)+j]].price)+" "+currency_name,items[Object.keys(items)[(i*8)+j]].description);
           } else {
@@ -390,13 +366,10 @@ client.on('messageCreate', async message => {
         embed_pages.push(StoreEmbed);
       }
       let page_num = start_page;
-      message.channel.send({embeds:[embed_pages[page_num-1]]}).then(botmsg => {
+      message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const filter = (reaction, user) => {
-          return ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id
-        }
-        const collector = botmsg.createReactionCollector({filter, time: 60000});
+        const collector = botmsg.createReactionCollector((reaction, user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000})
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
@@ -409,7 +382,7 @@ client.on('messageCreate', async message => {
             } else if (page_num > embed_pages.length) {
               page_num = embed_pages.length;
             }
-            botmsg.edit({embeds:[embed_pages[page_num-1]]});
+            botmsg.edit({embeds: [embed_pages[page_num-1]]});
             botmsg.react("⬅️").then(() => botmsg.react("➡️"));
           });
         });
@@ -420,7 +393,7 @@ client.on('messageCreate', async message => {
         .setTitle("Store")
         .setDescription("No items")
         .setTimestamp();
-      message.channel.send({embeds:[StoreEmbed]})
+      message.channel.send({embeds: [StoreEmbed]})
     } else {
       let StoreEmbed = new Discord.MessageEmbed()
         .setColor('#5a6347')
@@ -429,7 +402,7 @@ client.on('messageCreate', async message => {
       for (let i=0; i < Object.keys(items).length; i++) {
         StoreEmbed.addField(Object.keys(items)[i]+": "+String(items[Object.keys(items)[i]].price)+" "+currency_name,items[Object.keys(items)[i]].description);
       }
-      message.channel.send({embeds:[StoreEmbed]})
+      message.channel.send({embeds: [StoreEmbed]})
     }
   } else if (message.content.toLowerCase().startsWith(prefix+"transfer") || message.content.toLowerCase().startsWith(prefix+"pay")) {
     //[user @] [amount]
@@ -459,48 +432,43 @@ client.on('messageCreate', async message => {
       return message.channel.send("Cannot transfer money to yourself, error")
     }
     if (!receiver) {
-      await db.insert("user-"+mention.id, 0, "{}");
+      await db.insert_user("user-"+mention.id);
       receiver = await db.find("user-"+mention.id);
       let stakes = await db.find("stakes");
-      stakes = JSON.parse(stakes.stakes);
+      stakes = stakes.stakes;
       stakes[mention.id] = {}
       stakes[mention.id][mention.id] = 100;
-      stakes = JSON.stringify(stakes);
       await db.stakes_change(stakes);
     }
     if (sender.bal < amount) {
       return message.channel.send("Sender balance too low")
     }
     sender_bal = sender.bal-amount;
-    receiver_bal = Number(receiver.bal)+amount;
-    await db.replace("user-"+message.author.id, sender_bal, sender.inv);
-    await db.replace("user-"+mention.id, receiver_bal, receiver.inv);
+    receiver_bal = receiver.bal+amount;
+    await db.replace_user("user-"+message.author.id, sender_bal, sender.inv);
+    await db.replace_user("user-"+mention.id, receiver_bal, receiver.inv);
     message.channel.send("Successfully sent "+amount+" to "+mention.username);
   } else if (message.content.toLowerCase().startsWith(prefix+"buy")) {
     //[item] [optional: quantity]
     let item_name = args[0];
     let quantity = 1;
     if (args[1]) {
-      quantity = Number(args[1]);
-      if (!quantity) {
-        let similar_item = await db.find_similar_items(args);
-        if (similar_item) {
-          message.channel.send("Did you mean `"+similar_item+"`?");
+      try {
+        quantity = Number(args[1]);
+        if (!quantity) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
-        return message.channel.send("Second parameter is not a number, syntax error");
+      } catch {
+        return message.channel.send("Second argument is not a number, error");
       }
     }
     let store = await db.find("store");
     if (!store) {
-      await db.insert_one({"id":"store","items":"{}"});
+      await db.insert_one({"id": "store", "items": {}});
       store = await db.find("store");
     }
-    let items = JSON.parse(store.items);
+    let items = store.items;
     if (!items[item_name]) {
-      let similar_item = await db.find_similar_items(args);
-      if (similar_item) {
-        message.channel.send("Did you mean `"+similar_item+"`?");
-      }
       return message.channel.send("This item does not exist, error");
     }
     let user = await db.find("user-"+message.author.id);
@@ -509,14 +477,13 @@ client.on('messageCreate', async message => {
       return message.channel.send("You cannot afford this, error");
     }
     let user_bal = user.bal-(price*quantity);
-    let user_inv = JSON.parse(user.inv);
+    let user_inv = user.inv;
     if (user_inv[item_name]) {
       user_inv[item_name] = user_inv[item_name]+quantity;
     } else {
       user_inv[item_name] = quantity;
     }
-    user_inv = JSON.stringify(user_inv);
-    await db.replace("user-"+message.author.id, user_bal, user_inv);
+    await db.replace_user("user-"+message.author.id, user_bal, user_inv);
     message.channel.send("Bought items");
   } else if (message.content.toLowerCase().startsWith(prefix+"useitem")) {
     //[item] [optional: quantity]
@@ -534,20 +501,16 @@ client.on('messageCreate', async message => {
     }
     let store = await db.find("store");
     if (!store) {
-      await db.insert_one({"id":"store","items":"{}"});
+      await db.insert_one({"id": "store", "items": {}});
       store = await db.find("store");
     }
-    let items = JSON.parse(store.items);
+    let items = store.items;
     if (!items[item_name]) {
-      let similar_item = await db.find_similar_items(args);
-      if (similar_item) {
-        message.channel.send("Did you mean `"+similar_item+"`?");
-      }
       return message.channel.send("This item does not exist, error");
     }
     let user = await db.find("user-"+message.author.id);
     
-    let replace_inv = JSON.parse(user.inv);
+    let replace_inv = user.inv;
     if (!replace_inv[item_name]) {
       return message.channel.send("Error, not possible because the user does not have the item")
     } else {
@@ -559,24 +522,23 @@ client.on('messageCreate', async message => {
         delete replace_inv[item_name]
       }
     }
-    replace_inv = JSON.stringify(replace_inv)
-    await db.replace("user-"+message.author.id, user.bal, replace_inv);
-    message.channel.send("Success in using items")
+    await db.replace_user("user-"+message.author.id, user.bal, replace_inv);
+    message.channel.send("Success in using items");
   } else if (message.content.toLowerCase().startsWith(prefix+"credits")) {
     const creditEmbed = new Discord.MessageEmbed()
       .setColor('#11c384')
       .setTitle('Credits')
       .setURL('https://prussia.dev')
       .setDescription("The Arvald bot was made for Nnomtnert's Arvald by Prussia")
-    return message.channel.send({embeds:[creditEmbed]});
+    return message.channel.send({embeds: [creditEmbed]});
   } else if (message.content.toLowerCase().startsWith(prefix+"income")) {
     //format: {role id: {amount: money, claim_every: hours, last_claim: miliseconds}}
     let income = await db.find("income");
     if (!income) {
-      await db.insert_one({"id":"income","income":"{}"});
+      await db.insert_one({"id": "income", "income": {}});
       income = await db.find("income");
     }
-    income = JSON.parse(income.income);
+    income = income.income;
     let income_keys = Object.keys(income);
     if (args[0] == "descending" || args[0] == "d") {
       //this will find highest amount in income, add to new list, remove from old, repeat until no more left
@@ -620,7 +582,7 @@ client.on('messageCreate', async message => {
         .setTitle("Role Income")
         .setTimestamp();
       IncomeEmbed.setDescription("No role income");
-      message.channel.send({embeds:[IncomeEmbed]});
+      message.channel.send({embeds: [IncomeEmbed]});
     } else if (income_keys.length <= 25) {
       let IncomeEmbed = new Discord.MessageEmbed()
         .setColor('#84597f')
@@ -629,13 +591,12 @@ client.on('messageCreate', async message => {
       for (i=0; i < income_keys.length; i++) {
         let role = message.guild.roles.cache.get(income_keys[i]);
         if (!role) {
-          continue
+          continue;
         }
         IncomeEmbed.addField(String(income[income_keys[i]].amount)+" "+currency_name+" every "+income[income_keys[i]].claim_every+" hours", role.name);
       }
-      message.channel.send({embeds:[IncomeEmbed]});
+      message.channel.send({embeds: [IncomeEmbed]});
     } else {
-      let embeds = [];
       let number_of_pages = Math.ceil(Object.keys(items).length/25);
       for (i=0; i < number_of_pages; i++) {
         let IncomeEmbed = new Discord.MessageEmbed()
@@ -646,30 +607,25 @@ client.on('messageCreate', async message => {
           if ((i*25)+j < Object.keys(items).length) {
             IncomeEmbed.addField(String(income[Object.keys(income)[(i*25)+j]].amount)+" "+currency_name+" every "+income[Object.keys(income)[(i*8)+j]].claim_every+" hours", role.name);
           } else {
-            break
+            break;
           }
         }
-        embeds.push(IncomeEmbed);
-        message.channel.send({embeds:embeds});
+        message.channel.send({embeds: [IncomeEmbed]});
       }
-    } 
+    }
   } else if (message.content.toLowerCase().startsWith(prefix+"stakeslist")) {
-    //stakes: '{stake_owner:{stake_issuer: percentage}}'
+    //stakes: '{stake_owner: {stake_issuer: percentage}}'
     let send_string = "";
     let stakes = await db.find("stakes");
     if (!stakes) {
-      await db.insert_one({"id":"stakes","stakes":"{}"});
+      await db.insert_one({"id": "stakes", "stakes": {}});
       stakes = await db.find("stakes");
     }
     await message.guild.members.fetch()
-    stakes = JSON.parse(stakes.stakes);
+    stakes = stakes.stakes;
     for (i=0; i < Object.keys(stakes).length; i++) {
       let stake_owner = stakes[Object.keys(stakes)[i]];
-      let user = message.guild.members.cache.get(Object.keys(stakes)[i]);
-      if (!user) {
-        continue
-      }
-      send_string += "**"+user.user.tag+"**\n";
+      send_string += "**"+message.guild.members.cache.get(Object.keys(stakes)[i]).user.tag+"**\n";
       for (j=0; j < Object.keys(stake_owner).length; j++) {
         let stake_issuer = Object.keys(stake_owner)[j];
         send_string += message.guild.members.cache.get(Object.keys(stake_owner)[j]).user.tag+": "+stake_owner[stake_issuer]+"%\n";
@@ -681,10 +637,10 @@ client.on('messageCreate', async message => {
     let send_string = "";
     let market = await db.find("market");
     if (!market) {
-      await db.insert_one({"id":"market","market":"{}"});
+      await db.insert_one({"id": "market", "market": {}});
       market = await db.find("market");
     }
-    market = JSON.parse(market.market);
+    market = market.market;
     if (!Object.keys(market).length) {
       return message.channel.send("No sales going on at the moment")
     }
@@ -693,9 +649,9 @@ client.on('messageCreate', async message => {
       await message.guild.members.fetch()
       let user = message.guild.members.cache.get(stake_seller);
       if (!user) {
-        continue
+        continue;
       }
-      send_string += String(market[stake_seller][0])+" percent of "+message.guild.members.cache.get(market[stake_seller][2]).user.tag+" being sold by "+user.user.tag+" for "+String(market[stake_seller][1])+" "+currency_name+"\n";
+      send_string += String(market[stake_seller][0])+" percent of "+message.guild.members.cache.get(market[stake_seller][2]).user.tag+" being sold by "+message.guild.members.cache.get(stake_seller).user.tag+" for "+String(market[stake_seller][1])+" "+currency_name+"\n";
     }
     message.channel.send(send_string);
   } else if (message.content.toLowerCase().startsWith(prefix+"stakesbuy")) {
@@ -706,10 +662,10 @@ client.on('messageCreate', async message => {
     seller = seller.id;
     let market = await db.find("market");
     if (!market) {
-      await db.insert_one({"id":"market","market":"{}"});
+      await db.insert_one({"id": "market", "market": {}});
       market = await db.find("market");
     }
-    market = JSON.parse(market.market);
+    market = market.market;
     let offer = market[seller];
     if (!offer) {
       return message.channel.send("That user is not currently selling any stakes")
@@ -719,21 +675,21 @@ client.on('messageCreate', async message => {
       return message.channel.send("You cannot afford this");
     }
     delete market[seller];
-    await db.market_change(JSON.stringify(market));
+    await db.market_change(market);
     let bal = user.bal-offer[1];
-    await db.replace("user-"+message.author.id, bal, user.inv);
+    await db.replace_user("user-"+message.author.id, bal, user.inv);
     let seller_user = await db.find("user-"+seller);
-    let seller_bal = Number(user.bal)+offer[1];
-    await db.replace("user-"+seller, seller_bal, seller_user.inv);
+    let seller_bal = user.bal+offer[1];
+    await db.replace_user("user-"+seller, seller_bal, seller_user.inv);
     let stakes = await db.find("stakes");
-    stakes = JSON.parse(stakes.stakes);
+    stakes = stakes.stakes;
     if (!stakes[message.author.id][offer[2]]) {
       stakes[message.author.id][offer[2]] = offer[0];
     } else {
       stakes[message.author.id][offer[2]] += offer[0];
     }
     stakes[seller][offer[2]] -= offer[0];
-    await db.stakes_change(JSON.stringify(stakes));
+    await db.stakes_change(stakes);
     message.channel.send("Bought stake successfully");
   } else if (message.content.toLowerCase().startsWith(prefix+"stakessell")) {
     //[price] [percentage to sell]
@@ -747,10 +703,10 @@ client.on('messageCreate', async message => {
     }
     let market = await db.find("market");
     if (!market) {
-      await db.insert_one({"id":"market","market":"{}"});
+      await db.insert_one({"id": "market", "market": {}});
       market = await db.find("market");
     }
-    market = JSON.parse(market.market);
+    market = market.market;
     if (price) {
       try {
         price = Number(price);
@@ -783,10 +739,10 @@ client.on('messageCreate', async message => {
     }
     let stakes = await db.find("stakes");
     if (!stakes) {
-      await db.insert_one({"id":"stakes","stakes":"{}"});
+      await db.insert_one({"id": "stakes", "stakes": {}});
       stakes = await db.find("stakes");
     }
-    stakes = JSON.parse(stakes.stakes);
+    stakes = stakes.stakes;
     if (stakes[message.author.id][stake_issuer] < sell_percentage) {
       return messsage.channel.send("Don't own enough stake")
     }
@@ -794,17 +750,17 @@ client.on('messageCreate', async message => {
       return message.channel.send("Error, you can only sell one stake at a time")
     }
     market[message.author.id] = [sell_percentage, price, stake_issuer];
-    await db.market_change(JSON.stringify(market));
+    await db.market_change(market);
     message.channel.send("Success, selling stake");
   } else if (message.content.toLowerCase().startsWith(prefix+"stakescancel")) {
     let market = await db.find("market");
     if (!market) {
-      await db.insert_one({"id":"market","market":"{}"});
+      await db.insert_one({"id": "market", "market": {}});
       market = await db.find("market");
     }
-    market = JSON.parse(market.market);
+    market = market.market;
     delete market[message.author.id];
-    await db.market_change(JSON.stringify(market));
+    await db.market_change(market);
     message.channel.send("Canceled stake");
   } else if (message.content.toLowerCase().startsWith(prefix+"nextincome")) {
     let role = message.mentions.roles.first();
@@ -813,10 +769,10 @@ client.on('messageCreate', async message => {
     }
     let income = await db.find("income");
     if (!income) {
-      await db.insert_one({"id":"income","income":"{}"});
+      await db.insert_one({"id": "income","income": {}});
       income = await db.find("income");
     }
-    income = JSON.parse(income.income);
+    income = income.income;
     if (!income[role.id]) {
       return message.channel.send("Error role income does not exist");
     }
@@ -850,9 +806,9 @@ client.on('messageCreate', async message => {
       .setTitle('Leaderboard')
       .setFooter('Look mom, it\'s a rich person!')
     for (k=0; k < new_users.length; k++) {
-      LeaderboardEmbed.addField(String(new_users[k].bal), "<@"+new_users[k].id.split('-')[1]+">")
+      LeaderboardEmbed.addField(String(new_users[k].bal), "<@"+new_users[k].id.split('-')[1]+">");
     }
-    return message.channel.send({embeds:[LeaderboardEmbed]})
+    return message.channel.send({embeds: [LeaderboardEmbed]});
   }
 
   //admin only functions
@@ -876,38 +832,31 @@ client.on('messageCreate', async message => {
         }
       }
       let items = await db.find("store");
-      if (!items) {
-        await db.insert_one({"id":"store","items":"{}"});
-        items = await db.find("store");
+      if (!store) {
+        await db.insert_one({"id": "store", "items": {}});
+        store = await db.find("store");
       }
-      items = JSON.parse(items.items);
-      
+      items = items.items;
       if (!items[item_name]) {
-        let similar_item = await db.find_similar_items(args);
-        if (similar_item) {
-          message.channel.send("Did you mean `"+similar_item+"`?");
-        }
         return message.channel.send("Item does not exist")
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
-        await db.insert("user-"+mention.id, 0, "{}");
+        await db.insert_user("user-"+mention.id);
         user = await db.find("user-"+mention.id);
         let stakes = await db.find("stakes");
-        stakes = JSON.parse(stakes.stakes);
+        stakes = stakes.stakes;
         stakes[mention.id] = {}
         stakes[mention.id][mention.id] = 100;
-        stakes = JSON.stringify(stakes);
         await db.stakes_change(stakes);
       }
-      let replace_inv = JSON.parse(user.inv);
+      let replace_inv = user.inv;
       if (!replace_inv[item_name]) {
         replace_inv[item_name] = quantity;
       } else {
         replace_inv[item_name] = replace_inv[item_name]+quantity;
       }
-      replace_inv = JSON.stringify(replace_inv)
-      await db.replace("user-"+mention.id, user.bal, replace_inv);
+      await db.replace_user("user-"+mention.id, user.bal, replace_inv);
       message.channel.send("Successfully added item "+item_name)
     } else if (message.content.toLowerCase().startsWith(prefix+"removeinv")) {
       let mention = message.mentions.users.first();
@@ -927,30 +876,25 @@ client.on('messageCreate', async message => {
         }
       }
       let items = await db.find("store");
-      if (!items) {
-        await db.insert_one({"id":"store","items":"{}"});
-        items = await db.find("store");
+      if (!store) {
+        await db.insert_one({"id": "store", "items": {}});
+        store = await db.find("store");
       }
-      items = JSON.parse(items.items);
+      items = items.items;
       if (!items[item]) {
-        let similar_item = await db.find_similar_items(args);
-        if (similar_item) {
-          message.channel.send("Did you mean `"+similar_item+"`?");
-        }
         return message.channel.send("Item does not exist")
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
-        await db.insert("user-"+mention.id, 0, "{}");
+        await db.insert_user("user-"+mention.id);
         user = await db.find("user-"+mention.id);
         let stakes = await db.find("stakes");
-        stakes = JSON.parse(stakes.stakes);
+        stakes = stakes.stakes;
         stakes[mention.id] = {}
         stakes[mention.id][mention.id] = 100;
-        stakes = JSON.stringify(stakes);
         await db.stakes_change(stakes);
       }
-      let replace_inv = JSON.parse(user.inv);
+      let replace_inv = user.inv;
       if (!replace_inv[item]) {
         return message.channel.send("Error, not possible because the user does not have the item")
       } else {
@@ -962,8 +906,7 @@ client.on('messageCreate', async message => {
           delete replace_inv[item]
         }
       }
-      replace_inv = JSON.stringify(replace_inv)
-      await db.replace("user-"+mention.id, user.bal, replace_inv);
+      await db.replace_user("user-"+mention.id, user.bal, replace_inv);
       message.channel.send("Success in removing")
     } else if (message.content.toLowerCase().startsWith(prefix+"createitem")) {
       //createitem [item_name] [price] '[description]'
@@ -986,42 +929,32 @@ client.on('messageCreate', async message => {
       }
       let store = await db.find("store");
       if (!store) {
-        await db.insert_one({"id":"store","items":"{}"});
+        await db.insert_one({"id":"store", "items": {}});
         store = await db.find("store");
       }
-      let items = JSON.parse(store.items);
+      let items = store.items;
       if (items[item_name]) {
         return message.channel.send("Error, item already exists");
       }
       let description = args.splice(2);
       description = description.join(" ");
       description = description.slice(1,-1);
-      if (!description) {
-        description = "No description"
-      }
       items[item_name] = {"price": price, "description": description};
-      items = JSON.stringify(items);
       await db.store_change(items);
       message.channel.send("Created item");
     }  else if (message.content.toLowerCase().startsWith(prefix+"deleteitem")) {
       let item_name = args[0];
       let store = await db.find("store");
       if (!store) {
-        await db.insert_one({"id":"store","items":"{}"});
+        await db.insert_one({"id": "store", "items": {}});
         store = await db.find("store");
       }
-      let items = JSON.parse(store.items);
+      let items = store.items;
       if (!items[item_name]) {
-        let similar_item = await db.find_similar_items(args);
-        if (similar_item) {
-          message.channel.send("Did you mean `"+similar_item+"`?");
-        }
         return message.channel.send("Error, item does not exist");
       }
       delete items[item_name];
-      items = JSON.stringify(items);
       await db.store_change(items);
-      //delete items in other invs also
       message.channel.send("Item deleted")
     } else if (message.content.toLowerCase().startsWith(prefix+"edititem")) {
       let item_name = args[0];
@@ -1042,22 +975,14 @@ client.on('messageCreate', async message => {
         }
       }
       let store = await db.find("store");
-      let items = JSON.parse(store.items);
+      let items = store.items;
       if (!items[item_name]) {
-        let similar_item = await db.find_similar_items(args);
-        if (similar_item) {
-          message.channel.send("Did you mean `"+similar_item+"`?");
-        }
         return message.channel.send("Error, item doesn't exist");
       }
       let description = args.splice(2);
       description = description.join(" ");
       description = description.slice(1,-1);
-      if (!description) {
-        description = "No description";
-      }
       items[item_name] = {"price": price, "description": description};
-      items = JSON.stringify(items);
       await db.store_change(items);
       message.channel.send("Edit success");
     } else if (message.content.toLowerCase().startsWith(prefix+"removemoney")) {
@@ -1084,13 +1009,12 @@ client.on('messageCreate', async message => {
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
-        await db.insert("user-"+mention.id, 0, "{}");
+        await db.insert_user("user-"+mention.id);
         user = await db.find("user-"+mention.id);
         let stakes = await db.find("stakes");
-        stakes = JSON.parse(stakes.stakes);
+        stakes = stakes.stakes;
         stakes[mention.id] = {}
         stakes[mention.id][mention.id] = 100;
-        stakes = JSON.stringify(stakes);
         await db.stakes_change(stakes);
       }
       let user_bal = user.bal;
@@ -1098,7 +1022,7 @@ client.on('messageCreate', async message => {
         return message.channel.send("Cannot remove more than user balance")
       }
       user_bal = user_bal-amount;
-      await db.replace("user-"+mention.id, user_bal, user.inv);
+      await db.replace_user("user-"+mention.id, user_bal, user.inv);
       message.channel.send("Success, money removed");
     } else if (message.content.toLowerCase().startsWith(prefix+"addmoney")) {
       let mention = message.mentions.users.first();
@@ -1123,18 +1047,17 @@ client.on('messageCreate', async message => {
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
-        await db.insert("user-"+mention.id, 0, "{}");
+        await db.insert_user("user-"+mention.id);
         user = await db.find("user-"+mention.id);
         let stakes = await db.find("stakes");
-        stakes = JSON.parse(stakes.stakes);
+        stakes = stakes.stakes;
         stakes[mention.id] = {}
         stakes[mention.id][mention.id] = 100;
-        stakes = JSON.stringify(stakes);
         await db.stakes_change(stakes);
       }
-      let user_bal = Number(user.bal);
+      let user_bal = user.bal;
       user_bal = user_bal+amount;
-      await db.replace("user-"+mention.id, user_bal, user.inv);
+      await db.replace_user("user-"+mention.id, user_bal, user.inv);
       message.channel.send("Success, money added");
     } else if (message.content.toLowerCase().startsWith(prefix+"setbal")) {
       let mention = message.mentions.users.first();
@@ -1147,8 +1070,7 @@ client.on('messageCreate', async message => {
       } else {
         try {
           amount = Number(args[1])
-          if (amount === 0) {
-          } else if (!amount) {
+          if (!amount) {
             return message.channel.send("Second parameter is not a number, syntax error")
           }
         } catch {
@@ -1160,18 +1082,17 @@ client.on('messageCreate', async message => {
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
-        await db.insert("user-"+mention.id, 0, "{}");
+        await db.insert_user("user-"+mention.id);
         user = await db.find("user-"+mention.id);
         let stakes = await db.find("stakes");
-        stakes = JSON.parse(stakes.stakes);
+        stakes = stakes.stakes;
         stakes[mention.id] = {}
         stakes[mention.id][mention.id] = 100;
-        stakes = JSON.stringify(stakes);
         await db.stakes_change(stakes);
       }
       let user_bal = user.bal;
       user_bal = amount;
-      await db.replace("user-"+mention.id, user_bal, user.inv);
+      await db.replace_user("user-"+mention.id, user_bal, user.inv);
       message.channel.send("Balance set")
     } else if (message.content.toLowerCase().startsWith(prefix+"createincome")) {
       //createincome [role @] [claim every x hours] [amount]
@@ -1207,15 +1128,15 @@ client.on('messageCreate', async message => {
       }
       let income = await db.find("income");
       if (!income) {
-        await db.insert_one({"id":"income","income":"{}"});
+        await db.insert_one({"id": "income", "income": {}});
         income = await db.find("income");
       }
-      income = JSON.parse(income.income);
+      income = income.income;
       if (income[role.id]) {
         return message.channel.send("Error cannot create, role income already exists");
       }
       income[role.id] = {'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()};
-      await db.income_change(JSON.stringify(income));
+      await db.income_change(income);
       message.channel.send("Created role income")
     } else if (message.content.toLowerCase().startsWith(prefix+"deleteincome")) {
       let role = message.mentions.roles.first();
@@ -1224,15 +1145,15 @@ client.on('messageCreate', async message => {
       }
       let income = await db.find("income");
       if (!income) {
-        await db.insert_one({"id":"income","income":"{}"});
+        await db.insert_one({"id": "income", "income": {}});
         income = await db.find("income");
       }
-      income = JSON.parse(income.income);
+      income = income.income;
       if (!income[role.id]) {
         return message.channel.send("Error role income does not exist");
       }
       delete income[role.id];
-      await db.income_change(JSON.stringify(income));
+      await db.income_change(income);
       message.channel.send("Deleted role income");
     } else if (message.content.toLowerCase().startsWith(prefix+"editincome")) {
       let role = message.mentions.roles.first();
@@ -1267,39 +1188,20 @@ client.on('messageCreate', async message => {
       }
       let income = await db.find("income");
       if (!income) {
-        await db.insert_one({"id":"income","income":"{}"});
+        await db.insert_one({"id": "income", "income": {}});
         income = await db.find("income");
       }
-      income = JSON.parse(income.income);
+      income = income.income;
       if (!income[role.id]) {
         return message.channel.send("Error cannot edit, role income does not exist");
       }
       income[role.id] = {'claim_every': claim_every, 'amount': amount, 'last_claim': income[role.id].last_claim};
-      await db.income_change(JSON.stringify(income));
+      await db.income_change(income);
       message.channel.send("Edited role income")
     } else if (message.content.startsWith(prefix+"eval")) {
       if (eval_enabled) {
         eval(args.join(" "));
       }
-    } else if (message.content.startsWith(prefix+'pauseincome')) {
-      //undocumented
-      if (Number(args[0])) {
-        //go through all role incomes, change last_claim to that
-        let income = await db.find("income");
-        if (!income) {
-          await db.insert_one({"id":"income","income":"{}"});
-          income = await db.find("income");
-        }
-        income = JSON.parse(income.income);
-        for (i=0; i < Object.keys(income).length; i++) {
-          let roleincome = income[Object.keys(income)[i]];
-          //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()
-          income[Object.keys(income)[i]].last_claim = Number(args[0]);
-          await db.income_change(JSON.stringify(income));
-        }
-        return message.channel.send("Paused, hopefully")
-      }
-      //1644847200000
     }
   }
 });

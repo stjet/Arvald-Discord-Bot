@@ -1,7 +1,2 @@
-replit.nix
-node_modules
+/node_modules
 package-lock.json
-.config
-.upm
-.cache
-.replit
