@@ -117,13 +117,13 @@ client.on('messageCreate', async message => {
       .setTitle('Help')
       .addField(prefix+"help", 'Shows this (help) message') //FINISHED
       .addField(prefix+"store [optional: page]", 'Shows store') //FINISHED
-      .addField(prefix+"buy [item] [optional: quantity]", 'Buy item from store') //FINISHED
+      .addField(prefix+"buy [item name] [optional: quantity]", 'Buy item from store') //FINISHED
       .addField(prefix+"inv [optional: user @] [optional: page_num]", 'Shows inventory') //FINISHED
       .addField(prefix+"bal [optional: user @]", 'Shows balance') //FINISHED
       .addField(prefix+"transfer [user @] [amount]", 'Transfer funds to different user') //FINISHED
       .addField(prefix+"roll [optional: dice number]d[dice faces]", 'Roll dice') //FINISHED
       .addField(prefix+"leaderboard", 'Shows top 10 highest balance users') //FINISHED
-      .addField(prefix+"useitem [item] [optional: quantity]", 'Use items (destroys them)') //FINISHED
+      .addField(prefix+"useitem [item name] [optional: quantity]", 'Use items (destroys them)') //FINISHED
       .addField(prefix+"credits", 'Shows credits of bot creator') //FINISHED
       .addField(prefix+"income [optional: ascending/descending]",'Show role income') //FINISHED
       .addField(prefix+"nextincome [role @]", 'When next role income payout') //PENDING TESTING
@@ -141,10 +141,10 @@ client.on('messageCreate', async message => {
         .addField(prefix+"createincome [role @] [claim every x hours] [amount]",'Create role income') //FINISHED
         .addField(prefix+"edititem [item name] [price] '[description] [optional: required role mention]'",'Edit store item') //FINISHED
         .addField(prefix+"deleteitem [item name]",'Delete store item') //FINISHED
-        .addField(prefix+"createitem [item_name] [price] '[description]' [optional: required role mention]",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
+        .addField(prefix+"createitem [item name] [price] '[description]' [optional: required role mention]",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
         .addField(prefix+"setbal [user @] [value]",'Set balance of user') //FINISHED
-        .addField(prefix+"removeinv [user @] [item] [optional: quantity]",'Remove item from inventory') //FINISHED
-        .addField(prefix+"addinv [user @] [item] [optional: quantity]",'Add item to inventory') //FINISHED
+        .addField(prefix+"removeinv [user @] [item name] [optional: quantity]",'Remove item from inventory') //FINISHED
+        .addField(prefix+"addinv [user @] [item name] [optional: quantity]",'Add item to inventory') //FINISHED
         .addField(prefix+"removemoney [user @] [amount]",'Remove money from inventory') //FINISHED
         .addField(prefix+"addmoney [user @] [amount]",'Add money to inventory') //FINISHED
         .setTimestamp();
