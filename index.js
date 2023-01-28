@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 //const client = new Discord.Client({fetchAllMembers: true});
 const botIntents = new Discord.Intents();
-botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS', 'GUILD_MESSAGE_REACTIONS'])
+botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS', 'GUILD_MESSAGE_REACTIONS']);
 const client = new Discord.Client({intents: botIntents});
 
 const keep_alive = require('./keep_alive.js');
@@ -26,13 +26,13 @@ client.on('ready', () => {
   client.user.setActivity(prefix+'help', { type: 'PLAYING' });
   //setInterval
   setInterval(async function() {
-    console.log("Role income started")
+    console.log("Role income started");
     let income = await db.find("income");
     if (!income) {
       await db.insert_one({"id": "income", "income": {}});
       income = await db.find("income");
     }
-    await client.guilds.fetch()
+    await client.guilds.fetch();
     let guild = client.guilds.cache.get(guild_id);
     await guild.members.fetch();
     income = income.income;
@@ -42,7 +42,7 @@ client.on('ready', () => {
       if (Date.now() > roleincome.last_claim+(roleincome.claim_every*3600000)) {
         let multiplier = Math.floor((Date.now()-roleincome.last_claim)/(roleincome.claim_every*3600000));
         for (j=0; j < members.length; j++) {
-          //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()
+          //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now();
           let stakes = await db.find("stakes");
           if (!stakes) {
             await db.insert_one({"id": "stakes", "stakes": {}});
@@ -132,22 +132,22 @@ client.on('messageCreate', async message => {
       .addField(prefix+"stakessell [price] [percentage to sell] [optional: stake issuer user @]", 'Sell stake') //PENDING TESTING
       .addField(prefix+"stakesmarket", 'See which stakes are being sold') //PENDING TESTING
       .addField(prefix+"stakescancel", 'Cancels sell order') //PENDING TESTING
-      .setTimestamp()
+      .setTimestamp();
     if (admins.includes(message.author.id)) {
       let AdminHelpEmbed = new Discord.MessageEmbed()
         .setColor('#17d328')
         .addField(prefix+"editincome [role @] [claim every x hours] [amount]",'Edit role income') //FINISHED
         .addField(prefix+"deleteincome [role @]",'Delete role income') //FINISHED
         .addField(prefix+"createincome [role @] [claim every x hours] [amount]",'Create role income') //FINISHED
-        .addField(prefix+"edititem [item name] [price] '[description]'",'Edit store item') //FINISHED
+        .addField(prefix+"edititem [item name] [price] '[description] [optional: required role mention]'",'Edit store item') //FINISHED
         .addField(prefix+"deleteitem [item name]",'Delete store item') //FINISHED
-        .addField(prefix+"createitem [name] [price] '[description]'",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
+        .addField(prefix+"createitem [item_name] [price] '[description]' [optional: required role mention]",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
         .addField(prefix+"setbal [user @] [value]",'Set balance of user') //FINISHED
         .addField(prefix+"removeinv [user @] [item] [optional: quantity]",'Remove item from inventory') //FINISHED
         .addField(prefix+"addinv [user @] [item] [optional: quantity]",'Add item to inventory') //FINISHED
         .addField(prefix+"removemoney [user @] [amount]",'Remove money from inventory') //FINISHED
         .addField(prefix+"addmoney [user @] [amount]",'Add money to inventory') //FINISHED
-        .setTimestamp()
+        .setTimestamp();
       return message.channel.send({embeds: [HelpEmbed, AdminHelpEmbed]});
     }
     message.channel.send({embeds: [HelpEmbed]});
@@ -157,7 +157,7 @@ client.on('messageCreate', async message => {
       return message.channel.send("Missing first arg: `[optional: dice number]d[dice faces]`, eg `1d6`");
     }
     if (!arg.includes("d")) {
-      return message.channel.send("No 'd', invalid syntax")
+      return message.channel.send("No 'd', invalid syntax");
     }
     //this means x is not an argument
     if (arg.startsWith("d")) {
@@ -165,10 +165,10 @@ client.on('messageCreate', async message => {
       try {
         dice_faces = Number(dice_faces);
         if (!dice_faces) {
-          return message.channel.send("Second parameter is not a number, syntax error")
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       } catch {
-        return message.channel.send("First argument is not a number, invalid syntax")
+        return message.channel.send("First argument is not a number, invalid syntax");
       }
       let roll = Math.round(Math.random() * (dice_faces - 1) + 1);
       message.channel.send("Result: "+String(roll)+" ("+roll+"="+roll+")");
@@ -181,7 +181,7 @@ client.on('messageCreate', async message => {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       } catch {
-        return message.channel.send("First argument is not a number, invalid syntax")
+        return message.channel.send("First argument is not a number, invalid syntax");
       }
       let dice_faces;
       try {
@@ -201,7 +201,7 @@ client.on('messageCreate', async message => {
       let calculation = "";
       for (let i = 0; i < dice_result.length; i++) {
         total += dice_result[i];
-        calculation += String(dice_result[i])
+        calculation += String(dice_result[i]);
         if (i != dice_result.length-1) {
           calculation += "+";
         }
@@ -231,7 +231,7 @@ client.on('messageCreate', async message => {
       .setColor('#0d00b4')
       .setTitle(title)
       .setDescription(user.bal+" "+currency_name)
-      .setTimestamp()
+      .setTimestamp();
     message.channel.send({embeds: [BalEmbed]});
   } else if (message.content.toLowerCase().startsWith(prefix+"inv") || message.content.toLowerCase().startsWith(prefix+"items")) {
     let user_name = message.author.username;
@@ -243,7 +243,7 @@ client.on('messageCreate', async message => {
       user_id = mention.id;
       if (args[1]) {
         try {
-          start_page = Number(args[1])
+          start_page = Number(args[1]);
           if (!start_page) {
             return message.channel.send("Second parameter is not a number, syntax error");
           }
@@ -280,7 +280,7 @@ client.on('messageCreate', async message => {
         let InvEmbed = new Discord.MessageEmbed()
           .setColor('#bc2134')
           .setTitle(title+" Page "+String(i+1))
-          .setTimestamp()
+          .setTimestamp();
         for (let j=0; j < 8; j++) {
           if ((i*8)+j < Object.keys(user.inv).length) {
             InvEmbed.addField(Object.keys(user.inv)[(i*8)+j], String(user.inv[Object.keys(user.inv)[(i*8)+j]]));
@@ -294,7 +294,7 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const collector = botmsg.createReactionCollector((reaction,  user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000})
+        const collector = botmsg.createReactionCollector((reaction,  user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000});
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
@@ -311,14 +311,14 @@ client.on('messageCreate', async message => {
             botmsg.react("⬅️").then(() => botmsg.react("➡️"));
           });
         });
-      })
+      });
     } else if (Object.keys(user.inv).length == 0) {
       let InvEmbed = new Discord.MessageEmbed()
         .setColor('#bc2134')
         .setTitle(title)
         .setDescription("No items")
         .setTimestamp();
-      message.channel.send({embeds: [InvEmbed]})
+      message.channel.send({embeds: [InvEmbed]});
     } else {
       let InvEmbed = new Discord.MessageEmbed()
         .setColor('#bc2134')
@@ -327,7 +327,7 @@ client.on('messageCreate', async message => {
       for (let i=0; i < Object.keys(user.inv).length; i++) {
         InvEmbed.addField(Object.keys(user.inv)[i], String(user.inv[Object.keys(user.inv)[i]]));
       }
-      message.channel.send({embeds: [InvEmbed]})
+      message.channel.send({embeds: [InvEmbed]});
     }
   } else if (message.content.toLowerCase().startsWith(prefix+"store")) {
     let start_page = 1;
@@ -344,9 +344,10 @@ client.on('messageCreate', async message => {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       } catch {
-        return message.channel.send("First (optional) argument is not a number")
+        return message.channel.send("First (optional) argument is not a number");
       }
     }
+    //multiple pages
     if (Object.keys(items).length > 8) {
       let embed_pages = [];
       let number_of_pages = Math.ceil(Object.keys(items).length/8);
@@ -354,13 +355,19 @@ client.on('messageCreate', async message => {
         let StoreEmbed = new Discord.MessageEmbed()
           .setColor('#5a6347')
           .setTitle("Store Page "+String(i+1))
-          .setTimestamp()
+          .setTimestamp();
         for (let j=0; j < 8; j++) {
-          console.log((i*8)+j, Object.keys(items).length)
           if ((i*8)+j < Object.keys(items).length) {
-            StoreEmbed.addField(Object.keys(items)[(i*8)+j]+": "+String(items[Object.keys(items)[(i*8)+j]].price)+" "+currency_name,items[Object.keys(items)[(i*8)+j]].description);
+            let item_name = Object.keys(items)[(i*8)+j];
+            let item = items[item_name];
+            let field_name = item_name+": "+String(item.price)+" "+currency_name;
+            let field_value = item.description;
+            if (item.role_required) {
+              field_value += "\nRole required: <@&"+item.role_required+">";
+            }
+            StoreEmbed.addField(field_name, field_value);
           } else {
-            break
+            break;
           }
         }
         embed_pages.push(StoreEmbed);
@@ -369,7 +376,10 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const collector = botmsg.createReactionCollector((reaction, user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000})
+        const filter = (reaction, user) => {
+          return ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id;
+        }
+        const collector = botmsg.createReactionCollector({filter, time: 60000});
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
@@ -386,23 +396,30 @@ client.on('messageCreate', async message => {
             botmsg.react("⬅️").then(() => botmsg.react("➡️"));
           });
         });
-      })
+      });
     } else if (Object.keys(items).length == 0) {
       let StoreEmbed = new Discord.MessageEmbed()
         .setColor('#5a6347')
         .setTitle("Store")
         .setDescription("No items")
         .setTimestamp();
-      message.channel.send({embeds: [StoreEmbed]})
+      message.channel.send({embeds: [StoreEmbed]});
     } else {
       let StoreEmbed = new Discord.MessageEmbed()
         .setColor('#5a6347')
         .setTitle("Store")
         .setTimestamp();
       for (let i=0; i < Object.keys(items).length; i++) {
-        StoreEmbed.addField(Object.keys(items)[i]+": "+String(items[Object.keys(items)[i]].price)+" "+currency_name,items[Object.keys(items)[i]].description);
+        let item_name = Object.keys(items)[i];
+        let item = items[item_name];
+        let field_name = item_name+": "+String(item.price)+" "+currency_name;
+        let field_value = item.description;
+        if (item.role_required) {
+          field_value += "\nRole required: <@&"+item.role_required+">";
+        }
+        StoreEmbed.addField(field_name, field_value);
       }
-      message.channel.send({embeds: [StoreEmbed]})
+      message.channel.send({embeds: [StoreEmbed]});
     }
   } else if (message.content.toLowerCase().startsWith(prefix+"transfer") || message.content.toLowerCase().startsWith(prefix+"pay")) {
     //[user @] [amount]
@@ -417,19 +434,19 @@ client.on('messageCreate', async message => {
       try {
         amount = Number(amount);
         if (!amount) {
-          return message.channel.send("Second parameter is not a number, syntax error")
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       } catch {
         return message.channel.send("Second parameter is not a number, error");
       }
     }
     if (amount < 0) {
-      return message.channel.send("Amount cannot be negative, error")
+      return message.channel.send("Amount cannot be negative, error");
     }
     let sender = await db.find("user-"+message.author.id);
     let receiver = await db.find("user-"+mention.id);
     if (message.author.id == mention.id) {
-      return message.channel.send("Cannot transfer money to yourself, error")
+      return message.channel.send("Cannot transfer money to yourself, error");
     }
     if (!receiver) {
       await db.insert_user("user-"+mention.id);
@@ -441,7 +458,7 @@ client.on('messageCreate', async message => {
       await db.stakes_change(stakes);
     }
     if (sender.bal < amount) {
-      return message.channel.send("Sender balance too low")
+      return message.channel.send("Sender balance too low");
     }
     sender_bal = sender.bal-amount;
     receiver_bal = receiver.bal+amount;
@@ -471,6 +488,11 @@ client.on('messageCreate', async message => {
     if (!items[item_name]) {
       return message.channel.send("This item does not exist, error");
     }
+    if (items[item_name].role_required) {
+      if (!message.member.roles.cache.has(items[item_name].role_required)) {
+        return message.channel.send("Missing role required, error");
+      }
+    }
     let user = await db.find("user-"+message.author.id);
     let price = items[item_name].price;
     if (user.bal < price*quantity) {
@@ -496,7 +518,7 @@ client.on('messageCreate', async message => {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       } catch {
-        return message.channel.send("Second argument is not number, error")
+        return message.channel.send("Second argument is not number, error");
       }
     }
     let store = await db.find("store");
@@ -512,10 +534,10 @@ client.on('messageCreate', async message => {
     
     let replace_inv = user.inv;
     if (!replace_inv[item_name]) {
-      return message.channel.send("Error, not possible because the user does not have the item")
+      return message.channel.send("Error, not possible because the user does not have the item");
     } else {
       if (replace_inv[item_name] < quantity) {
-        return message.channel.send("Error, using more items than exist in the user's inventory is not allowed")
+        return message.channel.send("Error, using more items than exist in the user's inventory is not allowed");
       }
       replace_inv[item_name] = replace_inv[item_name]-quantity;
       if (replace_inv[item_name] == 0) {
@@ -529,7 +551,7 @@ client.on('messageCreate', async message => {
       .setColor('#11c384')
       .setTitle('Credits')
       .setURL('https://prussia.dev')
-      .setDescription("The Arvald bot was made for Nnomtnert's Arvald by Prussia")
+      .setDescription("The Arvald bot was made for Nnomtnert's Arvald by Prussia");
     return message.channel.send({embeds: [creditEmbed]});
   } else if (message.content.toLowerCase().startsWith(prefix+"income")) {
     //format: {role id: {amount: money, claim_every: hours, last_claim: miliseconds}}
@@ -621,7 +643,7 @@ client.on('messageCreate', async message => {
       await db.insert_one({"id": "stakes", "stakes": {}});
       stakes = await db.find("stakes");
     }
-    await message.guild.members.fetch()
+    await message.guild.members.fetch();
     stakes = stakes.stakes;
     for (i=0; i < Object.keys(stakes).length; i++) {
       let stake_owner = stakes[Object.keys(stakes)[i]];
@@ -642,11 +664,11 @@ client.on('messageCreate', async message => {
     }
     market = market.market;
     if (!Object.keys(market).length) {
-      return message.channel.send("No sales going on at the moment")
+      return message.channel.send("No sales going on at the moment");
     }
     for (i=0; i < Object.keys(market).length; i++) {
       let stake_seller = Object.keys(market)[i];
-      await message.guild.members.fetch()
+      await message.guild.members.fetch();
       let user = message.guild.members.cache.get(stake_seller);
       if (!user) {
         continue;
@@ -668,7 +690,7 @@ client.on('messageCreate', async message => {
     market = market.market;
     let offer = market[seller];
     if (!offer) {
-      return message.channel.send("That user is not currently selling any stakes")
+      return message.channel.send("That user is not currently selling any stakes");
     }
     let user = await db.find("user-"+message.author.id);
     if (user.bal < offer[1]) {
@@ -711,7 +733,7 @@ client.on('messageCreate', async message => {
       try {
         price = Number(price);
         if (!price) {
-          return message.channel.send("Second parameter is not a number, syntax error")
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       } catch {
         return message.channel.send("Price param is not a number");
@@ -744,10 +766,10 @@ client.on('messageCreate', async message => {
     }
     stakes = stakes.stakes;
     if (stakes[message.author.id][stake_issuer] < sell_percentage) {
-      return messsage.channel.send("Don't own enough stake")
+      return messsage.channel.send("Don't own enough stake");
     }
     if (market[message.author.id]) {
-      return message.channel.send("Error, you can only sell one stake at a time")
+      return message.channel.send("Error, you can only sell one stake at a time");
     }
     market[message.author.id] = [sell_percentage, price, stake_issuer];
     await db.market_change(market);
@@ -804,7 +826,7 @@ client.on('messageCreate', async message => {
     let LeaderboardEmbed = new Discord.MessageEmbed()
       .setColor('#99ff99')
       .setTitle('Leaderboard')
-      .setFooter('Look mom, it\'s a rich person!')
+      .setFooter('Look mom, it\'s a rich person!');
     for (k=0; k < new_users.length; k++) {
       LeaderboardEmbed.addField(String(new_users[k].bal), "<@"+new_users[k].id.split('-')[1]+">");
     }
@@ -817,7 +839,7 @@ client.on('messageCreate', async message => {
       //[user @] [item] [optional: quantity]
       let mention = message.mentions.users.first();
       if (!mention) {
-        return message.channel.send("No one mentioned, invalid syntax")
+        return message.channel.send("No one mentioned, invalid syntax");
       }
       let item_name = args[1];
       let quantity = 1;
@@ -828,7 +850,7 @@ client.on('messageCreate', async message => {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
         } catch {
-          return message.channel.send("Second argument is not a number, invalid syntax")
+          return message.channel.send("Second argument is not a number, invalid syntax");
         }
       }
       let items = await db.find("store");
@@ -838,7 +860,7 @@ client.on('messageCreate', async message => {
       }
       items = items.items;
       if (!items[item_name]) {
-        return message.channel.send("Item does not exist")
+        return message.channel.send("Item does not exist");
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
@@ -857,11 +879,11 @@ client.on('messageCreate', async message => {
         replace_inv[item_name] = replace_inv[item_name]+quantity;
       }
       await db.replace_user("user-"+mention.id, user.bal, replace_inv);
-      message.channel.send("Successfully added item "+item_name)
+      message.channel.send("Successfully added item "+item_name);
     } else if (message.content.toLowerCase().startsWith(prefix+"removeinv")) {
       let mention = message.mentions.users.first();
       if (!mention) {
-        return message.channel.send("No one mentioned, invalid syntax")
+        return message.channel.send("No one mentioned, invalid syntax");
       }
       let item = args[1];
       let quantity = 1;
@@ -872,7 +894,7 @@ client.on('messageCreate', async message => {
             return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
-          return message.channel.send("Second argument is not a number, invalid syntax")
+          return message.channel.send("Second argument is not a number, invalid syntax");
         }
       }
       let items = await db.find("store");
@@ -882,7 +904,7 @@ client.on('messageCreate', async message => {
       }
       items = items.items;
       if (!items[item]) {
-        return message.channel.send("Item does not exist")
+        return message.channel.send("Item does not exist");
       }
       let user = await db.find("user-"+mention.id);
       if (!user) {
@@ -896,10 +918,10 @@ client.on('messageCreate', async message => {
       }
       let replace_inv = user.inv;
       if (!replace_inv[item]) {
-        return message.channel.send("Error, not possible because the user does not have the item")
+        return message.channel.send("Error, not possible because the user does not have the item");
       } else {
         if (replace_inv[item] < quantity) {
-          return message.channel.send("Error, removing more items than exist in the user's inventory is not allowed")
+          return message.channel.send("Error, removing more items than exist in the user's inventory is not allowed");
         }
         replace_inv[item] = replace_inv[item]-quantity;
         if (replace_inv[item] == 0) {
@@ -907,12 +929,12 @@ client.on('messageCreate', async message => {
         }
       }
       await db.replace_user("user-"+mention.id, user.bal, replace_inv);
-      message.channel.send("Success in removing")
+      message.channel.send("Success in removing");
     } else if (message.content.toLowerCase().startsWith(prefix+"createitem")) {
-      //createitem [item_name] [price] '[description]'
+      //createitem [item_name] [price] '[description]' [optional: required role mention]
       let item_name = args[0];
       if (!item_name) {
-        return message.channel.send("Missing first parameter, syntax error")
+        return message.channel.send("Missing first parameter, syntax error");
       }
       let price = args[1];
       if (!args[1]) {
@@ -921,10 +943,10 @@ client.on('messageCreate', async message => {
         try {
           price = Number(price);
           if (!price) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
-          return message.channel.send("Second parameter is not a number, syntax error")
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let store = await db.find("store");
@@ -936,10 +958,17 @@ client.on('messageCreate', async message => {
       if (items[item_name]) {
         return message.channel.send("Error, item already exists");
       }
+      let role_required = message.mentions.roles.first();
+      if (role_required) {
+        args.pop();
+      }
       let description = args.splice(2);
       description = description.join(" ");
-      description = description.slice(1,-1);
+      description = description.slice(1, -1);
       items[item_name] = {"price": price, "description": description};
+      if (role_required) {
+        items[item_name].role_required = role_required.id;
+      }
       await db.store_change(items);
       message.channel.send("Created item");
     }  else if (message.content.toLowerCase().startsWith(prefix+"deleteitem")) {
@@ -955,11 +984,11 @@ client.on('messageCreate', async message => {
       }
       delete items[item_name];
       await db.store_change(items);
-      message.channel.send("Item deleted")
+      message.channel.send("Item deleted");
     } else if (message.content.toLowerCase().startsWith(prefix+"edititem")) {
       let item_name = args[0];
       if (!item_name) {
-        return message.channel.send("Missing first parameter, syntax error")
+        return message.channel.send("Missing first parameter, syntax error");
       }
       let price = args[1];
       if (!args[1]) {
@@ -968,10 +997,10 @@ client.on('messageCreate', async message => {
         try {
           price = Number(price);
           if (!price) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
-          return message.channel.send("Second parameter is not a number, syntax error")
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let store = await db.find("store");
@@ -979,29 +1008,36 @@ client.on('messageCreate', async message => {
       if (!items[item_name]) {
         return message.channel.send("Error, item doesn't exist");
       }
+      let role_required = message.mentions.roles.first();
+      if (role_required) {
+        args.pop();
+      }
       let description = args.splice(2);
       description = description.join(" ");
       description = description.slice(1,-1);
       items[item_name] = {"price": price, "description": description};
+      if (role_required) {
+        items[item_name].role_required = role_required.id;
+      }
       await db.store_change(items);
       message.channel.send("Edit success");
     } else if (message.content.toLowerCase().startsWith(prefix+"removemoney")) {
       //removemoney [user @] [amount]
       let mention = message.mentions.users.first();
       if (!mention) {
-        return message.channel.send("No one mentioned, invalid syntax")
+        return message.channel.send("No one mentioned, invalid syntax");
       }
       let amount = 0;
       if (!args[1]) {
-        return message.channel.send("Missing second argument, syntax error")
+        return message.channel.send("Missing second argument, syntax error");
       } else {
         try {
-          amount = Number(args[1])
+          amount = Number(args[1]);
           if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
-          return message.channel.send("Second argument is not a number, error")
+          return message.channel.send("Second argument is not a number, error");
         }
       }
       if (amount < 0) {
@@ -1019,7 +1055,7 @@ client.on('messageCreate', async message => {
       }
       let user_bal = user.bal;
       if (amount > user_bal) {
-        return message.channel.send("Cannot remove more than user balance")
+        return message.channel.send("Cannot remove more than user balance");
       }
       user_bal = user_bal-amount;
       await db.replace_user("user-"+mention.id, user_bal, user.inv);
@@ -1027,19 +1063,19 @@ client.on('messageCreate', async message => {
     } else if (message.content.toLowerCase().startsWith(prefix+"addmoney")) {
       let mention = message.mentions.users.first();
       if (!mention) {
-        return message.channel.send("No one mentioned, invalid syntax")
+        return message.channel.send("No one mentioned, invalid syntax");
       }
       let amount = 0;
       if (!args[1]) {
-        return message.channel.send("Missing second argument, syntax error")
+        return message.channel.send("Missing second argument, syntax error");
       } else {
         try {
-          amount = Number(args[1])
+          amount = Number(args[1]);
           if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
-          return message.channel.send("Second argument is not a number, error")
+          return message.channel.send("Second argument is not a number, error");
         }
       }
       if (amount < 0) {
@@ -1062,19 +1098,19 @@ client.on('messageCreate', async message => {
     } else if (message.content.toLowerCase().startsWith(prefix+"setbal")) {
       let mention = message.mentions.users.first();
       if (!mention) {
-        return message.channel.send("No one mentioned, invalid syntax")
+        return message.channel.send("No one mentioned, invalid syntax");
       }
       let amount = 0;
       if (!args[1]) {
-        return message.channel.send("Missing second argument, syntax error")
+        return message.channel.send("Missing second argument, syntax error");
       } else {
         try {
-          amount = Number(args[1])
+          amount = Number(args[1]);
           if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
-          return message.channel.send("Second argument is not a number, error")
+          return message.channel.send("Second argument is not a number, error");
         }
       }
       if (amount < 0) {
@@ -1093,7 +1129,7 @@ client.on('messageCreate', async message => {
       let user_bal = user.bal;
       user_bal = amount;
       await db.replace_user("user-"+mention.id, user_bal, user.inv);
-      message.channel.send("Balance set")
+      message.channel.send("Balance set");
     } else if (message.content.toLowerCase().startsWith(prefix+"createincome")) {
       //createincome [role @] [claim every x hours] [amount]
       let role = message.mentions.roles.first();
@@ -1107,7 +1143,7 @@ client.on('messageCreate', async message => {
         try {
           claim_every = Number(claim_every);
           if (!claim_every) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
           return message.channel.send("Second argument not number");
@@ -1120,7 +1156,7 @@ client.on('messageCreate', async message => {
         try {
           amount = Number(amount);
           if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
           return message.channel.send("Third argument not number");
@@ -1137,7 +1173,7 @@ client.on('messageCreate', async message => {
       }
       income[role.id] = {'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now()};
       await db.income_change(income);
-      message.channel.send("Created role income")
+      message.channel.send("Created role income");
     } else if (message.content.toLowerCase().startsWith(prefix+"deleteincome")) {
       let role = message.mentions.roles.first();
       if (!role) {
@@ -1167,7 +1203,7 @@ client.on('messageCreate', async message => {
         try {
           claim_every = Number(claim_every);
           if (!claim_every) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
           return message.channel.send("Second argument not number");
@@ -1180,7 +1216,7 @@ client.on('messageCreate', async message => {
         try {
           amount = Number(amount);
           if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error")
+            return message.channel.send("Second parameter is not a number, syntax error");
           }
         } catch {
           return message.channel.send("Third argument not number");
@@ -1197,7 +1233,7 @@ client.on('messageCreate', async message => {
       }
       income[role.id] = {'claim_every': claim_every, 'amount': amount, 'last_claim': income[role.id].last_claim};
       await db.income_change(income);
-      message.channel.send("Edited role income")
+      message.channel.send("Edited role income");
     } else if (message.content.startsWith(prefix+"eval")) {
       if (eval_enabled) {
         eval(args.join(" "));
