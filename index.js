@@ -4,8 +4,6 @@ const botIntents = new Discord.Intents();
 botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS', 'GUILD_MESSAGE_REACTIONS']);
 const client = new Discord.Client({intents: botIntents});
 
-const keep_alive = require('./keep_alive.js');
-
 const db = require('./db.js');
 
 const config = require('./config.js');
@@ -162,35 +160,23 @@ client.on('messageCreate', async message => {
     //this means x is not an argument
     if (arg.startsWith("d")) {
       let dice_faces = arg.slice(1);
-      try {
-        dice_faces = Number(dice_faces);
-        if (!dice_faces) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("First argument is not a number, invalid syntax");
+      dice_faces = Number(dice_faces);
+      if (!dice_faces) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
       let roll = Math.round(Math.random() * (dice_faces - 1) + 1);
       message.channel.send("Result: "+String(roll)+" ("+roll+"="+roll+")");
     } else {
       let args1 = arg.split("d");
       let dice_num;
-      try {
-        dice_num = Number(args1[0]);
-        if (!dice_num) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("First argument is not a number, invalid syntax");
+      dice_num = Number(args1[0]);
+      if (!dice_num) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
       let dice_faces;
-      try {
-        dice_faces = Number(args1[1]);
-        if (!dice_faces) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("Second argument is not a number, invalid syntax");
+      dice_faces = Number(args1[1]);
+      if (!dice_faces) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
       let dice_result = [];
       for (let i = 0; i < dice_num; i++) {
@@ -242,23 +228,15 @@ client.on('messageCreate', async message => {
       user_name = mention.username;
       user_id = mention.id;
       if (args[1]) {
-        try {
-          start_page = Number(args[1]);
-          if (!start_page) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument is not a number, invalid Syntax");
-        }
-      }
-    } else if (args[0]) {
-      try {
-        start_page = Number(args[0]);
+        start_page = Number(args[1]);
         if (!start_page) {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
-      } catch {
-        return message.channel.send("First argument is not a number, invalid Syntax");
+      }
+    } else if (args[0]) {
+      start_page = Number(args[0]);
+      if (!start_page) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     }
     let user = await db.find("user-"+user_id);
@@ -329,7 +307,7 @@ client.on('messageCreate', async message => {
       }
       message.channel.send({embeds: [InvEmbed]});
     }
-  } else if (message.content.toLowerCase().startsWith(prefix+"store")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"store") || message.content.toLowerCase().startsWith(prefix+"shop")) {
     let start_page = 1;
     let store = await db.find("store");
     if (!store) {
@@ -338,13 +316,9 @@ client.on('messageCreate', async message => {
     }
     let items = store.items;
     if (args[0]) {
-      try {
-        start_page = Number(args[0]);
-        if (!start_page) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("First (optional) argument is not a number");
+      start_page = Number(args[0]);
+      if (!start_page) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     }
     //multiple pages
@@ -371,6 +345,9 @@ client.on('messageCreate', async message => {
           }
         }
         embed_pages.push(StoreEmbed);
+      }
+      if (start_page > embed_pages.length) {
+        return message.channel.send("There are no items on that page, error");
       }
       let page_num = start_page;
       message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
@@ -431,13 +408,9 @@ client.on('messageCreate', async message => {
     if (!amount) {
       return message.channel.send("Missing second parameter, syntax error");
     } else {
-      try {
-        amount = Number(amount);
-        if (!amount) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("Second parameter is not a number, error");
+      amount = Number(amount);
+      if (!amount) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     }
     if (amount < 0) {
@@ -470,13 +443,13 @@ client.on('messageCreate', async message => {
     let item_name = args[0];
     let quantity = 1;
     if (args[1]) {
-      try {
-        quantity = Number(args[1]);
-        if (!quantity) {
+      quantity = Number(args[1]);
+      if (!quantity) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
           return message.channel.send("Second parameter is not a number, syntax error");
         }
-      } catch {
-        return message.channel.send("Second argument is not a number, error");
       }
     }
     let store = await db.find("store");
@@ -486,6 +459,10 @@ client.on('messageCreate', async message => {
     }
     let items = store.items;
     if (!items[item_name]) {
+      let similar_item = await db.find_similar_items(args);
+      if (similar_item) {
+        message.channel.send("Did you mean `"+similar_item+"`?");
+      }
       return message.channel.send("This item does not exist, error");
     }
     if (items[item_name].role_required) {
@@ -512,13 +489,13 @@ client.on('messageCreate', async message => {
     let item_name = args[0];
     let quantity = 1;
     if (args[1]) {
-      try {
-        quantity = Number(args[1]);
-        if (!quantity) {
-          return message.channel.send("Second parameter is not a number, syntax error");
+      quantity = Number(args[1]);
+      if (!quantity) {
+        let similar_item = await db.find_similar_items(args);
+        if (similar_item) {
+          message.channel.send("Did you mean `"+similar_item+"`?");
         }
-      } catch {
-        return message.channel.send("Second argument is not number, error");
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     }
     let store = await db.find("store");
@@ -528,6 +505,10 @@ client.on('messageCreate', async message => {
     }
     let items = store.items;
     if (!items[item_name]) {
+      let similar_item = await db.find_similar_items(args);
+      if (similar_item) {
+        message.channel.send("Did you mean `"+similar_item+"`?");
+      }
       return message.channel.send("This item does not exist, error");
     }
     let user = await db.find("user-"+message.author.id);
@@ -730,13 +711,9 @@ client.on('messageCreate', async message => {
     }
     market = market.market;
     if (price) {
-      try {
-        price = Number(price);
-        if (!price) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("Price param is not a number");
+      price = Number(price);
+      if (!price) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     } else {
       return message.channel.send("Missing first parameter");
@@ -745,13 +722,9 @@ client.on('messageCreate', async message => {
       return message.channel.send("Sorry, no negative please");
     }
     if (sell_percentage) {
-      try {
-        sell_percentage = Number(sell_percentage);
-        if (!sell_percentage) {
-          return message.channel.send("Second parameter is not a number, syntax error");
-        }
-      } catch {
-        return message.channel.send("Sell percentage param is not a number");
+      sell_percentage = Number(sell_percentage);
+      if (!sell_percentage) {
+        return message.channel.send("Second parameter is not a number, syntax error");
       }
     } else {
       return message.channel.send("Missing second parameter");
@@ -844,13 +817,9 @@ client.on('messageCreate', async message => {
       let item_name = args[1];
       let quantity = 1;
       if (args[2]) {
-        try {
-          quantity = Number(args[2]);
-          if (!quantity) {
+        quantity = Number(args[2]);
+        if (!quantity) {
           return message.channel.send("Second parameter is not a number, syntax error");
-        }
-        } catch {
-          return message.channel.send("Second argument is not a number, invalid syntax");
         }
       }
       let items = await db.find("store");
@@ -888,13 +857,9 @@ client.on('messageCreate', async message => {
       let item = args[1];
       let quantity = 1;
       if (args[2]) {
-        try {
-          quantity = Number(args[2]);
-          if (!quantity) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument is not a number, invalid syntax");
+        quantity = Number(args[2]);
+        if (!quantity) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let items = await db.find("store");
@@ -940,12 +905,8 @@ client.on('messageCreate', async message => {
       if (!args[1]) {
         return message.channel.send("Missing second parameter, syntax error");
       } else {
-        try {
-          price = Number(price);
-          if (!price) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
+        price = Number(price);
+        if (!price) {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
@@ -994,12 +955,8 @@ client.on('messageCreate', async message => {
       if (!args[1]) {
         return message.channel.send("Missing second parameter, syntax error");
       } else {
-        try {
-          price = Number(price);
-          if (!price) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
+        price = Number(price);
+        if (!price) {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
@@ -1031,13 +988,9 @@ client.on('messageCreate', async message => {
       if (!args[1]) {
         return message.channel.send("Missing second argument, syntax error");
       } else {
-        try {
-          amount = Number(args[1]);
-          if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument is not a number, error");
+        amount = Number(args[1]);
+        if (!amount) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       if (amount < 0) {
@@ -1069,13 +1022,9 @@ client.on('messageCreate', async message => {
       if (!args[1]) {
         return message.channel.send("Missing second argument, syntax error");
       } else {
-        try {
-          amount = Number(args[1]);
-          if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument is not a number, error");
+        amount = Number(args[1]);
+        if (!amount) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       if (amount < 0) {
@@ -1104,13 +1053,9 @@ client.on('messageCreate', async message => {
       if (!args[1]) {
         return message.channel.send("Missing second argument, syntax error");
       } else {
-        try {
-          amount = Number(args[1]);
-          if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument is not a number, error");
+        amount = Number(args[1]);
+        if (!amount) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       if (amount < 0) {
@@ -1140,26 +1085,18 @@ client.on('messageCreate', async message => {
       if (!claim_every) {
         return message.channel.send("Missing second argument, error");
       } else {
-        try {
-          claim_every = Number(claim_every);
-          if (!claim_every) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument not number");
+        claim_every = Number(claim_every);
+        if (!claim_every) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let amount = args[2];
       if (!amount) {
         return message.channel.send("Missing third argument, error");
       } else {
-        try {
-          amount = Number(amount);
-          if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Third argument not number");
+        amount = Number(amount);
+        if (!amount) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let income = await db.find("income");
@@ -1200,26 +1137,18 @@ client.on('messageCreate', async message => {
       if (!claim_every) {
         return message.channel.send("Missing second argument, error");
       } else {
-        try {
-          claim_every = Number(claim_every);
-          if (!claim_every) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Second argument not number");
+        claim_every = Number(claim_every);
+        if (!claim_every) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let amount = args[2];
       if (!amount) {
         return message.channel.send("Missing third argument, error");
       } else {
-        try {
-          amount = Number(amount);
-          if (!amount) {
-            return message.channel.send("Second parameter is not a number, syntax error");
-          }
-        } catch {
-          return message.channel.send("Third argument not number");
+        amount = Number(amount);
+        if (!amount) {
+          return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
       let income = await db.find("income");

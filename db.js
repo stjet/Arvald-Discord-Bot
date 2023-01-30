@@ -59,11 +59,11 @@ async function find_similar_items(args) {
     }
     if (query.includes('_')) {
       query = query.split('_').map(arg => arg[0].toUpperCase()+arg.slice(1)).join('_')
-      if (query == item_name) {
+      if (query == item_name || query.replace('_', '').toLowerCase() === item_name.toLowerCase()) {
         return item_name;
       }
     } else {
-      if (query[0].toUpperCase()+query.slice(1) == item_name) {
+      if (query.toLowerCase() == item_name.toLowerCase()) {
         return item_name;
       }
     }
