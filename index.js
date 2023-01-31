@@ -134,17 +134,19 @@ client.on('messageCreate', async message => {
     if (admins.includes(message.author.id)) {
       let AdminHelpEmbed = new Discord.MessageEmbed()
         .setColor('#17d328')
-        .addField(prefix+"editincome [role @] [claim every x hours] [amount]",'Edit role income') //FINISHED
-        .addField(prefix+"deleteincome [role @]",'Delete role income') //FINISHED
-        .addField(prefix+"createincome [role @] [claim every x hours] [amount]",'Create role income') //FINISHED
-        .addField(prefix+"edititem [item name] [price] '[description] [optional: required role mention]'",'Edit store item') //FINISHED
-        .addField(prefix+"deleteitem [item name]",'Delete store item') //FINISHED
-        .addField(prefix+"createitem [item name] [price] '[description]' [optional: required role mention]",'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
-        .addField(prefix+"setbal [user @] [value]",'Set balance of user') //FINISHED
-        .addField(prefix+"removeinv [user @] [item name] [optional: quantity]",'Remove item from inventory') //FINISHED
-        .addField(prefix+"addinv [user @] [item name] [optional: quantity]",'Add item to inventory') //FINISHED
-        .addField(prefix+"removemoney [user @] [amount]",'Remove money from inventory') //FINISHED
-        .addField(prefix+"addmoney [user @] [amount]",'Add money to inventory') //FINISHED
+        .addField(prefix+"editincome [role @] [claim every x hours] [amount]", 'Edit role income') //FINISHED
+        .addField(prefix+"deleteincome [role @]", 'Delete role income') //FINISHED
+        .addField(prefix+"createincome [role @] [claim every x hours] [amount]", 'Create role income') //FINISHED
+        .addField(prefix+"edititem [item name] [price] '[description] [optional: required role mention]'", 'Edit store item') //FINISHED
+        .addField(prefix+"deleteitem [item name]", 'Delete store item') //FINISHED
+        .addField(prefix+"createitem [item name] [price] '[description]' [optional: required role mention]", 'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
+        .addField(prefix+"setbal [user @] [value]", 'Set balance of user') //FINISHED
+        .addField(prefix+"removeinv [user @] [item name] [optional: quantity]", 'Remove item from inventory') //FINISHED
+        .addField(prefix+"addinv [user @] [item name] [optional: quantity]", 'Add item to inventory') //FINISHED
+        .addField(prefix+"removemoney [user @] [amount]", 'Remove money from inventory') //FINISHED
+        .addField(prefix+"addmoney [user @] [amount]", 'Add money to inventory') //FINISHED
+        .addField(prefix+"additemrole [item name] [role @]", 'Add role to user when item is used') //PENDING TESTING
+        .addField(prefix+"deleteitemrole [item name]", 'No longer give role to user when item is used') //PENDING TESTING
         .setTimestamp();
       return message.channel.send({embeds: [HelpEmbed, AdminHelpEmbed]});
     }
@@ -511,8 +513,10 @@ client.on('messageCreate', async message => {
       }
       return message.channel.send("This item does not exist, error");
     }
+    if (items[item_name].use_role) {
+      message.member.roles.add(items[item_name].use_role);
+    }
     let user = await db.find("user-"+message.author.id);
-    
     let replace_inv = user.inv;
     if (!replace_inv[item_name]) {
       return message.channel.send("Error, not possible because the user does not have the item");
@@ -912,7 +916,7 @@ client.on('messageCreate', async message => {
       }
       let store = await db.find("store");
       if (!store) {
-        await db.insert_one({"id":"store", "items": {}});
+        await db.insert_one({"id": "store", "items": {}});
         store = await db.find("store");
       }
       let items = store.items;
@@ -932,7 +936,7 @@ client.on('messageCreate', async message => {
       }
       await db.store_change(items);
       message.channel.send("Created item");
-    }  else if (message.content.toLowerCase().startsWith(prefix+"deleteitem")) {
+    } else if (message.content.toLowerCase().startsWith(prefix+"deleteitem")) {
       let item_name = args[0];
       let store = await db.find("store");
       if (!store) {
@@ -1163,6 +1167,47 @@ client.on('messageCreate', async message => {
       income[role.id] = {'claim_every': claim_every, 'amount': amount, 'last_claim': income[role.id].last_claim};
       await db.income_change(income);
       message.channel.send("Edited role income");
+    } else if (message.content.startsWith(prefix+"additemrole")) {
+      let item_name = args[0];
+      if (!item_name) {
+        return message.channel.send("Missing first parameter, syntax error");
+      }
+      let store = await db.find("store");
+      if (!store) {
+        await db.insert_one({"id": "store", "items": {}});
+        store = await db.find("store");
+      }
+      let items = store.items;
+      if (!items[item_name]) {
+        return message.channel.send("This item does not exist, error");
+      }
+      let item_role = message.mentions.roles.first();
+      if (!item_role) {
+        return message.channel.send("Error, missing role mention");
+      }
+      items[item_name].use_role = item_role.id;
+      await db.store_change(items);
+      message.channel.send("Added use role to item");
+    } else if (message.content.startsWith(prefix+"deleteitemrole")) {
+      let item_name = args[0];
+      if (!item_name) {
+        return message.channel.send("Missing first parameter, syntax error");
+      }
+      let store = await db.find("store");
+      if (!store) {
+        await db.insert_one({"id": "store", "items": {}});
+        store = await db.find("store");
+      }
+      let items = store.items;
+      if (!items[item_name]) {
+        return message.channel.send("This item does not exist, error");
+      }
+      if (!items[item_name].use_role) {
+        return message.channel.send("This item does not have an use role in the first place, error");
+      }
+      delete items[item_name].use_role;
+      await db.store_change(items);
+      message.channel.send("Removed use role from item");
     } else if (message.content.startsWith(prefix+"eval")) {
       if (eval_enabled) {
         eval(args.join(" "));
