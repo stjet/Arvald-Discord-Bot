@@ -798,6 +798,9 @@ client.on('messageCreate', async message => {
       }
       new_users.push(users[greatest]);
       users.splice(greatest, 1);
+      if (users.length === 0) {
+        break;
+      }
     }
     //
     let LeaderboardEmbed = new Discord.MessageEmbed()
