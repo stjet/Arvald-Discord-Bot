@@ -338,6 +338,9 @@ client.on('messageCreate', async message => {
             let item = items[item_name];
             let field_name = item_name+": "+String(item.price)+" "+currency_name;
             let field_value = item.description;
+            if (!field_value) {
+              field_value = "No description.";
+            }
             if (item.role_required) {
               field_value += "\nRole required: <@&"+item.role_required+">";
             }
@@ -393,6 +396,9 @@ client.on('messageCreate', async message => {
         let item = items[item_name];
         let field_name = item_name+": "+String(item.price)+" "+currency_name;
         let field_value = item.description;
+        if (!field_value) {
+          field_value = "No description.";
+        }
         if (item.role_required) {
           field_value += "\nRole required: <@&"+item.role_required+">";
         }
