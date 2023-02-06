@@ -82,7 +82,7 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   client.user.setActivity(prefix+'help', { type: 'PLAYING' });
   //update role income on start (giving some time so db is connected), then do it every 25 minutes
-  setTimeout(role_income_update(), 3000);
+  setTimeout(role_income_update, 3000);
   setInterval(role_income_update, 1500000); //3600000 is 1 hour, 1500000 is every 25 mins
 });
 
