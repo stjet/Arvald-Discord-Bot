@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Discord = require('discord.js');
 //const client = new Discord.Client({fetchAllMembers: true});
 const botIntents = new Discord.Intents();
@@ -19,63 +20,70 @@ const admins = config.admins;
 
 const guild_id = config.guild_id;
 
+const logging = false;
+
+async function role_income_update() {
+  if (logging) {
+    console.log("Role income started");
+  }
+  let income = await db.find("income");
+  if (!income) {
+    await db.insert_one({"id": "income", "income": {}});
+    income = await db.find("income");
+  }
+  await client.guilds.fetch();
+  let guild = client.guilds.cache.get(guild_id);
+  await guild.members.fetch();
+  income = income.income;
+  for (i=0; i < Object.keys(income).length; i++) {
+    let roleincome = income[Object.keys(income)[i]]
+    let members = guild.roles.cache.get(Object.keys(income)[i]).members.map(m=>m.user.id);
+    if (Date.now() > roleincome.last_claim+(roleincome.claim_every*3600000)) {
+      let multiplier = Math.floor((Date.now()-roleincome.last_claim)/(roleincome.claim_every*3600000));
+      for (j=0; j < members.length; j++) {
+        //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now();
+        let stakes = await db.find("stakes");
+        if (!stakes) {
+          await db.insert_one({"id": "stakes", "stakes": {}});
+          stakes = await db.find("stakes");
+        }
+        stakes = stakes.stakes;
+        //stakes: '{stake_owner: {stake_issuer: percentage}}'
+        let stake_holders = [];
+        //gets all holders of user's stakes
+        for (k=0; k < Object.keys(stakes).length; k++) {
+          let stake_owner = stakes[Object.keys(stakes)[k]];
+          for (l=0; l < Object.keys(stake_owner).length; l++) {
+            let stake_issuer = Object.keys(stake_owner)[l];
+            let percentage = stake_owner[stake_issuer]
+            if (stake_issuer == members[j]) {
+              stake_holders.push([Object.keys(stakes)[k], percentage]);
+            }
+          }
+        }
+        for (m=0; m < stake_holders.length; m++) {
+          let user = await db.find("user-"+stake_holders[m][0]);
+          if (!user) {
+            await db.insert_user("user-"+stake_holders[m][0]);
+            user = await db.find("user-"+stake_holders[m][0]);
+          }
+          let bal = user.bal;
+          bal += Math.round(roleincome.amount*(stake_holders[m][1]/100))*multiplier;
+          await db.replace_user("user-"+stake_holders[m][0], bal, user.inv);
+        }
+      }
+      income[Object.keys(income)[i]].last_claim = Date.now();
+      await db.income_change(income);
+    }
+  }
+}
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   client.user.setActivity(prefix+'help', { type: 'PLAYING' });
-  //setInterval
-  setInterval(async function() {
-    console.log("Role income started");
-    let income = await db.find("income");
-    if (!income) {
-      await db.insert_one({"id": "income", "income": {}});
-      income = await db.find("income");
-    }
-    await client.guilds.fetch();
-    let guild = client.guilds.cache.get(guild_id);
-    await guild.members.fetch();
-    income = income.income;
-    for (i=0; i < Object.keys(income).length; i++) {
-      let roleincome = income[Object.keys(income)[i]]
-      let members = guild.roles.cache.get(Object.keys(income)[i]).members.map(m=>m.user.id);
-      if (Date.now() > roleincome.last_claim+(roleincome.claim_every*3600000)) {
-        let multiplier = Math.floor((Date.now()-roleincome.last_claim)/(roleincome.claim_every*3600000));
-        for (j=0; j < members.length; j++) {
-          //'claim_every': claim_every, 'amount': amount, 'last_claim': Date.now();
-          let stakes = await db.find("stakes");
-          if (!stakes) {
-            await db.insert_one({"id": "stakes", "stakes": {}});
-            stakes = await db.find("stakes");
-          }
-          stakes = stakes.stakes;
-          //stakes: '{stake_owner: {stake_issuer: percentage}}'
-          let stake_holders = [];
-          //gets all holders of user's stakes
-          for (k=0; k < Object.keys(stakes).length; k++) {
-            let stake_owner = stakes[Object.keys(stakes)[k]];
-            for (l=0; l < Object.keys(stake_owner).length; l++) {
-              let stake_issuer = Object.keys(stake_owner)[l];
-              let percentage = stake_owner[stake_issuer]
-              if (stake_issuer == members[j]) {
-                stake_holders.push([Object.keys(stakes)[k], percentage]);
-              }
-            }
-          }
-          for (m=0; m < stake_holders.length; m++) {
-            let user = await db.find("user-"+stake_holders[m][0]);
-            if (!user) {
-              await db.insert_user("user-"+stake_holders[m][0]);
-              user = await db.find("user-"+stake_holders[m][0]);
-            }
-            let bal = user.bal;
-            bal += Math.round(roleincome.amount*(stake_holders[m][1]/100))*multiplier;
-            await db.replace_user("user-"+stake_holders[m][0], bal, user.inv);
-          }
-        }
-        income[Object.keys(income)[i]].last_claim = Date.now();
-        await db.income_change(income);
-      }
-    }
-  }, 3600000); //3600000 is 1 hour
+  //update role income on start (giving some time so db is connected), then do it every 25 minutes
+  setTimeout(role_income_update(), 3000);
+  setInterval(role_income_update, 1500000); //3600000 is 1 hour, 1500000 is every 25 mins
 });
 
 //stakes: '{stake_owner: {stake_issuer: percentage}}'
@@ -784,7 +792,7 @@ client.on('messageCreate', async message => {
     let minutes = Math.round((Number(income[role.id].last_claim)+Number(income[role.id].claim_every)*60*60*1000 - Date.now())/1000/60);
     let hours = minutes/60;
     if (hours < 1) {
-      return message.channel.send(minutes+" minutes. Please note the bot updates role income every half hour or so, so if the time given is less than a half hour (or negative), it may not actually update then.");
+      return message.channel.send(minutes+" minutes. Please note the bot updates role income every twenty five minutes or so, so if the time given is less than a half hour (or negative), it may not actually update then.");
     } else {
       return message.channel.send(hours+" hours.");
     }
@@ -835,12 +843,12 @@ client.on('messageCreate', async message => {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
-      let items = await db.find("store");
+      let store = await db.find("store");
       if (!store) {
         await db.insert_one({"id": "store", "items": {}});
         store = await db.find("store");
       }
-      items = items.items;
+      let items = store.items;
       if (!items[item_name]) {
         return message.channel.send("Item does not exist");
       }
@@ -875,12 +883,12 @@ client.on('messageCreate', async message => {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
-      let items = await db.find("store");
+      let store = await db.find("store");
       if (!store) {
         await db.insert_one({"id": "store", "items": {}});
         store = await db.find("store");
       }
-      items = items.items;
+      let items = items.items;
       if (!items[item]) {
         return message.channel.send("Item does not exist");
       }
