@@ -888,7 +888,7 @@ client.on('messageCreate', async message => {
         await db.insert_one({"id": "store", "items": {}});
         store = await db.find("store");
       }
-      let items = items.items;
+      let items = store.items;
       if (!items[item]) {
         return message.channel.send("Item does not exist");
       }
