@@ -35,7 +35,7 @@ async function role_income_update() {
   let guild = client.guilds.cache.get(guild_id);
   await guild.members.fetch();
   income = income.income;
-  for (i=0; i < Object.keys(income).length; i++) {
+  for (let i=0; i < Object.keys(income).length; i++) {
     let roleincome = income[Object.keys(income)[i]]
     let members = guild.roles.cache.get(Object.keys(income)[i]).members.map(m=>m.user.id);
     if (Date.now() > roleincome.last_claim+(roleincome.claim_every*3600000)) {
@@ -552,7 +552,7 @@ client.on('messageCreate', async message => {
       .setURL('https://prussia.dev')
       .setDescription("The Arvald bot was made for Nnomtnert's Arvald by Prussia");
     return message.channel.send({embeds: [creditEmbed]});
-  } else if (message.content.toLowerCase().startsWith(prefix+"income")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"income") || message.content.toLowerCase().startsWith(prefix+"roleincome")) {
     //format: {role id: {amount: money, claim_every: hours, last_claim: miliseconds}}
     let income = await db.find("income");
     if (!income) {
@@ -566,12 +566,10 @@ client.on('messageCreate', async message => {
       let old_income = Object.keys(income);
       let new_income = [];
       let length = Object.keys(income).length;
-      for (e=0; e < length; e++) {
-        let biggest;
-        for (i=0; i < old_income.length; i++) {
-          if (!biggest) {
-            biggest = i;
-          } else if (income[old_income[i]].amount > income[old_income[biggest]].amount) {
+      for (let e=0; e < length; e++) {
+        let biggest = 0;
+        for (let i=0; i < old_income.length; i++) {
+          if (income[old_income[i]].amount > income[old_income[biggest]].amount) {
             biggest = i;
           }
         }
@@ -583,12 +581,10 @@ client.on('messageCreate', async message => {
       let old_income = Object.keys(income);
       let new_income = [];
       let length = Object.keys(income).length;
-      for (e=0; e < length; e++) {
-        let smallest;
-        for (i=0; i < old_income.length; i++) {
-          if (!smallest) {
-            smallest = i;
-          } else if (income[old_income[i]].amount < income[old_income[smallest]].amount) {
+      for (let e=0; e < length; e++) {
+        let smallest = 0;
+        for (let i=0; i < old_income.length; i++) {
+          if (income[old_income[i]].amount < income[old_income[smallest]].amount) {
             smallest = i;
           }
         }
@@ -609,7 +605,7 @@ client.on('messageCreate', async message => {
         .setColor('#84597f')
         .setTitle("Role Income")
         .setTimestamp();
-      for (i=0; i < income_keys.length; i++) {
+      for (let i=0; i < income_keys.length; i++) {
         let role = message.guild.roles.cache.get(income_keys[i]);
         if (!role) {
           continue;
@@ -619,7 +615,7 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [IncomeEmbed]});
     } else {
       let number_of_pages = Math.ceil(Object.keys(items).length/25);
-      for (i=0; i < number_of_pages; i++) {
+      for (let i=0; i < number_of_pages; i++) {
         let IncomeEmbed = new Discord.MessageEmbed()
           .setColor('#84597f')
           .setTitle("Role Income")
@@ -644,7 +640,7 @@ client.on('messageCreate', async message => {
     }
     await message.guild.members.fetch();
     stakes = stakes.stakes;
-    for (i=0; i < Object.keys(stakes).length; i++) {
+    for (let i=0; i < Object.keys(stakes).length; i++) {
       let stake_owner = stakes[Object.keys(stakes)[i]];
       send_string += "**"+message.guild.members.cache.get(Object.keys(stakes)[i]).user.tag+"**\n";
       for (j=0; j < Object.keys(stake_owner).length; j++) {
@@ -665,7 +661,7 @@ client.on('messageCreate', async message => {
     if (!Object.keys(market).length) {
       return message.channel.send("No sales going on at the moment");
     }
-    for (i=0; i < Object.keys(market).length; i++) {
+    for (let i=0; i < Object.keys(market).length; i++) {
       let stake_seller = Object.keys(market)[i];
       await message.guild.members.fetch();
       let user = message.guild.members.cache.get(stake_seller);
@@ -801,12 +797,10 @@ client.on('messageCreate', async message => {
     let new_users = [];
     //sort users by balance, then put in embed
     //we want to get top 10
-    for (i=0; i < 10; i++) {
-      let greatest;
+    for (let i=0; i < 10; i++) {
+      let greatest = 0;
       for (j=0; j < users.length; j++) {
-        if (!greatest) {
-          greatest = j;
-        } else if (users[j].bal > users[greatest].bal) {
+        if (users[j].bal > users[greatest].bal) {
           greatest = j;
         }
       }
@@ -1075,7 +1069,7 @@ client.on('messageCreate', async message => {
         return message.channel.send("Missing second argument, syntax error");
       } else {
         amount = Number(args[1]);
-        if (!amount) {
+        if (!amount && amount !== 0) {
           return message.channel.send("Second parameter is not a number, syntax error");
         }
       }
