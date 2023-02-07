@@ -183,6 +183,9 @@ client.on('messageCreate', async message => {
       if (!dice_num) {
         return message.channel.send("Second parameter is not a number, syntax error");
       }
+      if (dice_num > 100) {
+        return message.channel.send("Cannot roll more than 100 dice, error");
+      }
       let dice_faces;
       dice_faces = Number(args1[1]);
       if (!dice_faces) {
