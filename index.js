@@ -5,6 +5,8 @@ const botIntents = new Discord.Intents();
 botIntents.add(['GUILD_MESSAGES', 'GUILD_MEMBERS', 'GUILDS', 'GUILD_MESSAGE_REACTIONS']);
 const client = new Discord.Client({intents: botIntents});
 
+const crypto = require("crypto");
+
 const db = require('./db.js');
 
 const config = require('./config.js');
@@ -121,40 +123,40 @@ client.on('messageCreate', async message => {
     let HelpEmbed = new Discord.MessageEmbed()
       .setColor('#17d328')
       .setTitle('Help')
-      .addField(prefix+"help", 'Shows this (help) message') //FINISHED
-      .addField(prefix+"store [optional: page]", 'Shows store') //FINISHED
-      .addField(prefix+"buy [item name] [optional: quantity]", 'Buy item from store') //FINISHED
-      .addField(prefix+"inv [optional: user @] [optional: page_num]", 'Shows inventory') //FINISHED
-      .addField(prefix+"bal [optional: user @]", 'Shows balance') //FINISHED
-      .addField(prefix+"transfer [user @] [amount]", 'Transfer funds to different user') //FINISHED
-      .addField(prefix+"roll [optional: dice number]d[dice faces]", 'Roll dice') //FINISHED
-      .addField(prefix+"leaderboard", 'Shows top 10 highest balance users') //FINISHED
-      .addField(prefix+"useitem [item name] [optional: quantity]", 'Use items (destroys them)') //FINISHED
-      .addField(prefix+"credits", 'Shows credits of bot creator') //FINISHED
-      .addField(prefix+"income [optional: ascending/descending]",'Show role income') //FINISHED
-      .addField(prefix+"nextincome [role @]", 'When next role income payout') //PENDING TESTING
-      .addField(prefix+"stakeslist", 'Show stakes info') //IN PROGRESS
-      .addField(prefix+"stakesbuy [seller: user @]", 'Buy stake') //PENDING TESTING
-      .addField(prefix+"stakessell [price] [percentage to sell] [optional: stake issuer user @]", 'Sell stake') //PENDING TESTING
-      .addField(prefix+"stakesmarket", 'See which stakes are being sold') //PENDING TESTING
-      .addField(prefix+"stakescancel", 'Cancels sell order') //PENDING TESTING
+      .addFields({ name: prefix+"help", value: 'Shows this (help) message' }) //FINISHED
+      .addFields({ name: prefix+"store [optional: page]", value: 'Shows store' }) //FINISHED
+      .addFields({ name: prefix+"buy [item name] [optional: quantity]", value: 'Buy item from store' }) //FINISHED
+      .addFields({ name: prefix+"inv [optional: user @] [optional: page_num]", value: 'Shows inventory' }) //FINISHED
+      .addFields({ name: prefix+"bal [optional: user @]", value: 'Shows balance' }) //FINISHED
+      .addFields({ name: prefix+"transfer [user @] [amount]", value: 'Transfer funds to different user' }) //FINISHED
+      .addFields({ name: prefix+"roll [optional: dice number]d[dice faces]", value: 'Roll dice' }) //FINISHED
+      .addFields({ name: prefix+"leaderboard", value: 'Shows top 10 highest balance users' }) //FINISHED
+      .addFields({ name: prefix+"useitem [item name] [optional: quantity]", value: 'Use items (destroys them)' }) //FINISHED
+      .addFields({ name: prefix+"credits", value: 'Shows credits of bot creator' }) //FINISHED
+      .addFields({ name: prefix+"income [optional: ascending/descending]", value: 'Show role income' }) //FINISHED
+      .addFields({ name: prefix+"nextincome [role @]", value: 'When next role income payout' }) //PENDING TESTING
+      .addFields({ name: prefix+"stakeslist", value: 'Show stakes info' }) //IN PROGRESS
+      .addFields({ name: prefix+"stakesbuy [seller: user @]", value: 'Buy stake' }) //PENDING TESTING
+      .addFields({ name: prefix+"stakessell [price] [percentage to sell] [optional: stake issuer user @]", value: 'Sell stake' }) //PENDING TESTING
+      .addFields({ name: prefix+"stakesmarket", value: 'See which stakes are being sold' }) //PENDING TESTING
+      .addFields({ name: prefix+"stakescancel", value: 'Cancels sell order' }) //PENDING TESTING
       .setTimestamp();
     if (admins.includes(message.author.id)) {
       let AdminHelpEmbed = new Discord.MessageEmbed()
         .setColor('#17d328')
-        .addField(prefix+"editincome [role @] [claim every x hours] [amount]", 'Edit role income') //FINISHED
-        .addField(prefix+"deleteincome [role @]", 'Delete role income') //FINISHED
-        .addField(prefix+"createincome [role @] [claim every x hours] [amount]", 'Create role income') //FINISHED
-        .addField(prefix+"edititem [item name] [price] '[description] [optional: required role mention]'", 'Edit store item') //FINISHED
-        .addField(prefix+"deleteitem [item name]", 'Delete store item') //FINISHED
-        .addField(prefix+"createitem [item name] [price] '[description]' [optional: required role mention]", 'Create store item. Multi word item names are not allowed, please use underscores as a workaround.') //FINISHED
-        .addField(prefix+"setbal [user @] [value]", 'Set balance of user') //FINISHED
-        .addField(prefix+"removeinv [user @] [item name] [optional: quantity]", 'Remove item from inventory') //FINISHED
-        .addField(prefix+"addinv [user @] [item name] [optional: quantity]", 'Add item to inventory') //FINISHED
-        .addField(prefix+"removemoney [user @] [amount]", 'Remove money from inventory') //FINISHED
-        .addField(prefix+"addmoney [user @] [amount]", 'Add money to inventory') //FINISHED
-        .addField(prefix+"additemrole [item name] [role @]", 'Add role to user when item is used') //PENDING TESTING
-        .addField(prefix+"deleteitemrole [item name]", 'No longer give role to user when item is used') //PENDING TESTING
+        .addFields({ name: prefix+"editincome [role @] [claim every x hours] [amount]", value: 'Edit role income' }) //FINISHED
+        .addFields({ name: prefix+"deleteincome [role @]", value: 'Delete role income' }) //FINISHED
+        .addFields({ name: prefix+"createincome [role @] [claim every x hours] [amount]", value: 'Create role income' }) //FINISHED
+        .addFields({ name: prefix+"edititem [item name] [price] '[description] [optional: required role mention]'", value: 'Edit store item' }) //FINISHED
+        .addFields({ name: prefix+"deleteitem [item name]", value: 'Delete store item' }) //FINISHED
+        .addFields({ name: prefix+"createitem [item name] [price] '[description]' [optional: required role mention]", value: 'Create store item. Multi word item names are not allowed, please use underscores as a workaround.' }) //FINISHED
+        .addFields({ name: prefix+"setbal [user @] [value]", value: 'Set balance of user' }) //FINISHED
+        .addFields({ name: prefix+"removeinv [user @] [item name] [optional: quantity]", value: 'Remove item from inventory' }) //FINISHED
+        .addFields({ name: prefix+"addinv [user @] [item name] [optional: quantity]", value: 'Add item to inventory' }) //FINISHED
+        .addFields({ name: prefix+"removemoney [user @] [amount]", value: 'Remove money from inventory' }) //FINISHED
+        .addFields({ name: prefix+"addmoney [user @] [amount]", value: 'Add money to inventory' }) //FINISHED
+        .addFields({ name: prefix+"additemrole [item name] [role @]", value: 'Add role to user when item is used' }) //PENDING TESTING
+        .addFields({ name: prefix+"deleteitemrole [item name]", value: 'No longer give role to user when item is used' }) //PENDING TESTING
         .setTimestamp();
       return message.channel.send({embeds: [HelpEmbed, AdminHelpEmbed]});
     }
@@ -174,7 +176,7 @@ client.on('messageCreate', async message => {
       if (!dice_faces) {
         return message.channel.send("Second parameter is not a number, syntax error");
       }
-      let roll = Math.round(Math.random() * (dice_faces - 1) + 1);
+      let roll = crypto.randomInt(6)+1;
       message.channel.send("Result: "+String(roll)+" ("+roll+"="+roll+")");
     } else {
       let args1 = arg.split("d");
@@ -193,7 +195,7 @@ client.on('messageCreate', async message => {
       }
       let dice_result = [];
       for (let i = 0; i < dice_num; i++) {
-        let roll = Math.round(Math.random() * (dice_faces - 1) + 1);
+        let roll = crypto.randomInt(6)+1;
         dice_result.push(roll);
       }
       let total = 0;
@@ -274,7 +276,7 @@ client.on('messageCreate', async message => {
           .setTimestamp();
         for (let j=0; j < 8; j++) {
           if ((i*8)+j < Object.keys(user.inv).length) {
-            InvEmbed.addField(Object.keys(user.inv)[(i*8)+j], String(user.inv[Object.keys(user.inv)[(i*8)+j]]));
+            InvEmbed.addFields({ name: Object.keys(user.inv)[(i*8)+j], value: String(user.inv[Object.keys(user.inv)[(i*8)+j]]) });
           } else {
             break;
           }
@@ -316,7 +318,7 @@ client.on('messageCreate', async message => {
         .setTitle(title)
         .setTimestamp();
       for (let i=0; i < Object.keys(user.inv).length; i++) {
-        InvEmbed.addField(Object.keys(user.inv)[i], String(user.inv[Object.keys(user.inv)[i]]));
+        InvEmbed.addFields({ name: Object.keys(user.inv)[i], value: String(user.inv[Object.keys(user.inv)[i]]) });
       }
       message.channel.send({embeds: [InvEmbed]});
     }
@@ -355,7 +357,7 @@ client.on('messageCreate', async message => {
             if (item.role_required) {
               field_value += "\nRole required: <@&"+item.role_required+">";
             }
-            StoreEmbed.addField(field_name, field_value);
+            StoreEmbed.addFields({ name: field_name, value: field_value });
           } else {
             break;
           }
@@ -413,7 +415,7 @@ client.on('messageCreate', async message => {
         if (item.role_required) {
           field_value += "\nRole required: <@&"+item.role_required+">";
         }
-        StoreEmbed.addField(field_name, field_value);
+        StoreEmbed.addFields({ name: field_name, value: field_value });
       }
       message.channel.send({embeds: [StoreEmbed]});
     }
@@ -503,7 +505,7 @@ client.on('messageCreate', async message => {
     }
     await db.replace_user("user-"+message.author.id, user_bal, user_inv);
     message.channel.send("Bought items");
-  } else if (message.content.toLowerCase().startsWith(prefix+"useitem")) {
+  } else if (message.content.toLowerCase().startsWith(prefix+"useitem") || message.content.toLowerCase().startsWith(prefix+"use ")) {
     //[item] [optional: quantity]
     let item_name = args[0];
     let quantity = 1;
@@ -613,7 +615,7 @@ client.on('messageCreate', async message => {
         if (!role) {
           continue;
         }
-        IncomeEmbed.addField(String(income[income_keys[i]].amount)+" "+currency_name+" every "+income[income_keys[i]].claim_every+" hours", role.name);
+        IncomeEmbed.addFields({ name: String(income[income_keys[i]].amount)+" "+currency_name+" every "+income[income_keys[i]].claim_every+" hours", value: role.name });
       }
       message.channel.send({embeds: [IncomeEmbed]});
     } else {
@@ -625,7 +627,7 @@ client.on('messageCreate', async message => {
           .setTimestamp();
         for (let j=0; j < 25; j++) {
           if ((i*25)+j < Object.keys(items).length) {
-            IncomeEmbed.addField(String(income[Object.keys(income)[(i*25)+j]].amount)+" "+currency_name+" every "+income[Object.keys(income)[(i*8)+j]].claim_every+" hours", role.name);
+            IncomeEmbed.addFields({ name: String(income[Object.keys(income)[(i*25)+j]].amount)+" "+currency_name+" every "+income[Object.keys(income)[(i*8)+j]].claim_every+" hours", value: role.name });
           } else {
             break;
           }
@@ -819,7 +821,7 @@ client.on('messageCreate', async message => {
       .setTitle('Leaderboard')
       .setFooter('Look mom, it\'s a rich person!');
     for (k=0; k < new_users.length; k++) {
-      LeaderboardEmbed.addField(String(new_users[k].bal), "<@"+new_users[k].id.split('-')[1]+">");
+      LeaderboardEmbed.addFields({ name: String(new_users[k].bal), value: "<@"+new_users[k].id.split('-')[1]+">"});
     }
     return message.channel.send({embeds: [LeaderboardEmbed]});
   }
