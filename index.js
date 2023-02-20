@@ -287,7 +287,10 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [embed_pages[page_num-1]]}).then(botmsg => {
         botmsg.react("⬅️");
         botmsg.react("➡️");
-        const collector = botmsg.createReactionCollector((reaction,  user) => ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id,{time: 60000});
+        const filter = (reaction, user) => {
+          return ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === message.author.id;
+        }
+        const collector = botmsg.createReactionCollector({filter, time: 60000});
         collector.on('collect', reaction => {
           botmsg.reactions.removeAll().then(async () => {
             if (reaction.emoji.name === '⬅️') {
@@ -620,6 +623,7 @@ client.on('messageCreate', async message => {
       message.channel.send({embeds: [IncomeEmbed]});
     } else {
       let number_of_pages = Math.ceil(Object.keys(items).length/25);
+      let income_embeds = [];
       for (let i=0; i < number_of_pages; i++) {
         let IncomeEmbed = new Discord.MessageEmbed()
           .setColor('#84597f')
@@ -632,8 +636,9 @@ client.on('messageCreate', async message => {
             break;
           }
         }
-        message.channel.send({embeds: [IncomeEmbed]});
+        income_embeds.push(IncomeEmbed);
       }
+      message.channel.send({embeds: income_embeds});
     }
   } else if (message.content.toLowerCase().startsWith(prefix+"stakeslist")) {
     //stakes: '{stake_owner: {stake_issuer: percentage}}'
