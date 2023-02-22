@@ -176,26 +176,24 @@ client.on('messageCreate', async message => {
       if (!dice_faces) {
         return message.channel.send("Second parameter is not a number, syntax error");
       }
-      let roll = crypto.randomInt(6)+1;
+      let roll = crypto.randomInt(dice_faces)+1;
       message.channel.send("Result: "+String(roll)+" ("+roll+"="+roll+")");
     } else {
       let args1 = arg.split("d");
-      let dice_num;
-      dice_num = Number(args1[0]);
+      let dice_num = Number(args1[0]);
       if (!dice_num) {
         return message.channel.send("Second parameter is not a number, syntax error");
       }
       if (dice_num > 100) {
         return message.channel.send("Cannot roll more than 100 dice, error");
       }
-      let dice_faces;
-      dice_faces = Number(args1[1]);
+      let dice_faces = Number(args1[1]);
       if (!dice_faces) {
         return message.channel.send("Second parameter is not a number, syntax error");
       }
       let dice_result = [];
       for (let i = 0; i < dice_num; i++) {
-        let roll = crypto.randomInt(6)+1;
+        let roll = crypto.randomInt(dice_faces)+1;
         dice_result.push(roll);
       }
       let total = 0;
